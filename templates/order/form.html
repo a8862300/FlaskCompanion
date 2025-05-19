@@ -185,5 +185,19 @@
     </div>
 </form>
 
+<script>
+// 预加载产品数据，用于动态添加订单项
+const productData = [
+    {% for product in products %}
+    {
+        id: {{ product.id }},
+        name: "{{ product.name }}",
+        sku: "{{ product.sku }}",
+        selling_price: {{ product.selling_price }},
+        stock_quantity: {{ product.stock_quantity }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+</script>
 <script src="{{ url_for('static', filename='js/order.js') }}"></script>
 {% endblock %}

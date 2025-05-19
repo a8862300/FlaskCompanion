@@ -72,9 +72,18 @@ function getAllProductOptions() {
     if (productSelects.length > 0) {
         return productSelects[0].innerHTML;
     } else {
-        // 如果还没有商品选择器，从产品列表中获取
+        // 如果还没有商品选择器，获取预加载的产品数据
         let options = '<option value="">-- 选择商品 --</option>';
-        // 这种情况实际不会发生，因为已经在模板中预加载了选项
+        
+        // 从全局变量或API获取产品数据
+        if (typeof productData !== 'undefined' && productData.length > 0) {
+            productData.forEach(product => {
+                options += `<option value="${product.id}" data-price="${product.selling_price}" data-stock="${product.stock_quantity}">
+                    ${product.name} (${product.sku}) - 库存: ${product.stock_quantity}
+                </option>`;
+            });
+        }
+        
         return options;
     }
 }
