@@ -19,17 +19,28 @@ def list():
     customer_id = request.args.get('customer_id', type=int)
     status = request.args.get('status')
     category_id = request.args.get('category_id', type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
     period = request.args.get('period')
     
+    # 初始化日期变量
+    start_date = None
+    end_date = None
+    
     # 转换日期字符串为日期对象（如果提供）
-    if start_date:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d')
-    if end_date:
-        end_date = datetime.strptime(end_date, '%Y-%m-%d')
-        # 设置为当天结束时间
-        end_date = end_date.replace(hour=23, minute=59, second=59)
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        except ValueError:
+            flash('开始日期格式无效', 'error')
+    
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            # 设置为当天结束时间
+            end_date = end_date.replace(hour=23, minute=59, second=59)
+        except ValueError:
+            flash('结束日期格式无效', 'error')
     
     # 根据周期设置日期范围
     today = datetime.now()
@@ -112,6 +123,10 @@ def list():
         ('year', '本年度')
     ]
     
+    # 为前端传递日期字符串
+    start_date_display = start_date.strftime('%Y-%m-%d') if start_date else ''
+    end_date_display = end_date.strftime('%Y-%m-%d') if end_date else ''
+    
     return render_template(
         'order/list.html', 
         orders=orders, 
@@ -123,8 +138,8 @@ def list():
             'customer_id': customer_id,
             'status': status,
             'category_id': category_id,
-            'start_date': start_date.strftime('%Y-%m-%d') if start_date else '',
-            'end_date': end_date.strftime('%Y-%m-%d') if end_date else '',
+            'start_date': start_date_display,
+            'end_date': end_date_display,
             'period': period
         }
     )
