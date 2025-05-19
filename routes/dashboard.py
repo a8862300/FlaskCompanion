@@ -2,7 +2,8 @@ from flask import Blueprint, render_template
 from flask_login import login_required
 from sqlalchemy import func
 
-from models import User, Customer, Product, RawMaterial, Order, Category
+from app import db
+from models import User, Customer, Product, RawMaterial, Order, Category, OrderItem
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
