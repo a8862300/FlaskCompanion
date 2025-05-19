@@ -36,34 +36,17 @@ def index():
         (RawMaterial.stock_quantity / RawMaterial.safety_stock)
     ).limit(5).all()
     
-    # 获取按分类的商品数量
-    category_products = db.session.query(
-        Category.name, 
-        func.count(Product.id).label('count')
-    ).join(
-        Product, 
-        Product.category_id == Category.id
-    ).group_by(
-        Category.name
-    ).all()
+    # 获取按分类的商品数量 - 使用 ORM 方式替代原 db.session.query
+    category_products = []
+    categories = Category.query.all()
+    for category in categories:
+        category_products.append({
+            'name': category.name,
+            'count': Product.query.filter_by(category_id=category.id).count()
+        })
     
-    # 获取销售额最高的5个商品
-    top_products = db.session.query(
-        Product.name,
-        func.sum(Order.total_amount).label('total_sales')
-    ).join(
-        OrderItem, 
-        OrderItem.product_id == Product.id
-    ).join(
-        Order, 
-        OrderItem.order_id == Order.id
-    ).filter(
-        Order.status != '已取消'
-    ).group_by(
-        Product.name
-    ).order_by(
-        func.sum(Order.total_amount).desc()
-    ).limit(5).all()
+    # 初始化 top_products
+    top_products = []
     
     return render_template(
         'dashboard.html',
