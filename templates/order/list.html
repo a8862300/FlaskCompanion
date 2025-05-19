@@ -177,5 +177,56 @@ window.onclick = function(event) {
         closeModal();
     }
 }
+
+// 增强订单查询功能
+document.addEventListener('DOMContentLoaded', function() {
+    // 时间周期下拉框变化时自动设置日期
+    const periodSelect = document.querySelector('select[name="period"]');
+    const startDateInput = document.querySelector('input[name="start_date"]');
+    const endDateInput = document.querySelector('input[name="end_date"]');
+    
+    if (periodSelect && startDateInput && endDateInput) {
+        periodSelect.addEventListener('change', function() {
+            const period = this.value;
+            const today = new Date();
+            
+            if (period === 'today') {
+                // 今天
+                startDateInput.value = formatDate(today);
+                endDateInput.value = formatDate(today);
+            } else if (period === 'week') {
+                // 本周 (周一到周日)
+                const monday = new Date(today);
+                monday.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+                startDateInput.value = formatDate(monday);
+                endDateInput.value = formatDate(today);
+            } else if (period === 'month') {
+                // 本月
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                startDateInput.value = formatDate(firstDay);
+                endDateInput.value = formatDate(today);
+            } else if (period === 'quarter') {
+                // 本季度
+                const quarter = Math.floor(today.getMonth() / 3);
+                const firstDay = new Date(today.getFullYear(), quarter * 3, 1);
+                startDateInput.value = formatDate(firstDay);
+                endDateInput.value = formatDate(today);
+            } else if (period === 'year') {
+                // 本年
+                const firstDay = new Date(today.getFullYear(), 0, 1);
+                startDateInput.value = formatDate(firstDay);
+                endDateInput.value = formatDate(today);
+            }
+        });
+    }
+    
+    // 日期格式化工具函数 YYYY-MM-DD
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+});
 </script>
 {% endblock %}

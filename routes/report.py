@@ -15,18 +15,7 @@ report_bp = Blueprint('report', __name__, url_prefix='/reports')
 @login_required
 def sales():
     """销售统计报表"""
-    form = ReportDateRangeForm()
-    
-    # 处理表单提交
-    if form.validate_on_submit():
-        start_date = form.start_date.data.strftime('%Y-%m-%d')
-        end_date = form.end_date.data.strftime('%Y-%m-%d')
-        return render_template(
-            'report/sales.html',
-            form=form,
-            start_date=start_date,
-            end_date=end_date
-        )
+    form = ReportDateRangeForm(request.form)
     
     # 获取日期范围
     start_date = request.args.get('start_date')
@@ -38,15 +27,20 @@ def sales():
     if not end_date:
         end_date = datetime.now().strftime('%Y-%m-%d')
     
+    # 初始化日期对象
+    start_date_obj = None
+    end_date_obj = None
+    
     try:
         # 转换为日期对象
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
         
+        # 设置表单默认值
         form.start_date.data = start_date_obj
         form.end_date.data = end_date_obj
     except ValueError:
-        flash('日期格式无效，请使用YYYY-MM-DD格式', 'error')
+        flash('日期格式无效，请使用正确的日期格式', 'error')
         start_date_obj = datetime.now().replace(day=1)
         end_date_obj = datetime.now()
         form.start_date.data = start_date_obj
@@ -149,11 +143,11 @@ def sales():
         end_date=end_date
     )
 
-@report_bp.route('/material-cost')
+@report_bp.route('/material-cost', methods=['GET', 'POST'])
 @login_required
 def material_cost():
     """月度原材料支出报告"""
-    form = ReportDateRangeForm()
+    form = ReportDateRangeForm(request.form)
     
     # 获取日期范围
     start_date = request.args.get('start_date')
@@ -165,12 +159,26 @@ def material_cost():
     if not end_date:
         end_date = datetime.now().strftime('%Y-%m-%d')
     
-    # 转换为日期对象
-    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
-    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+    # 初始化日期对象
+    start_date_obj = None
+    end_date_obj = None
     
-    form.start_date.data = start_date_obj
-    form.end_date.data = end_date_obj
+    try:
+        # 转换为日期对象
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+        
+        # 设置表单默认值
+        form.start_date.data = start_date_obj
+        form.end_date.data = end_date_obj
+    except ValueError:
+        flash('日期格式无效，请使用正确的日期格式', 'error')
+        start_date_obj = datetime.now().replace(day=1)
+        end_date_obj = datetime.now()
+        form.start_date.data = start_date_obj
+        form.end_date.data = end_date_obj
+        start_date = start_date_obj.strftime('%Y-%m-%d')
+        end_date = end_date_obj.strftime('%Y-%m-%d')
     
     # 月度原材料支出统计
     monthly_costs = db.session.query(

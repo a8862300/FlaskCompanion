@@ -12,7 +12,7 @@
 
 <!-- 日期范围筛选 -->
 <div class="filter-form">
-    <form action="{{ url_for('report.material_cost') }}" method="get">
+    <form action="{{ url_for('report.material_cost') }}" method="get" id="reportForm">
         <div class="form-row">
             <div class="form-group">
                 <label>开始日期</label>
@@ -24,7 +24,7 @@
             </div>
         </div>
         <div style="text-align: right;">
-            <button type="submit" class="btn">生成报表</button>
+            <button type="submit" id="generateReport" class="btn">生成报表</button>
         </div>
     </form>
 </div>
@@ -117,4 +117,19 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+// 确保生成报表按钮正常工作
+document.addEventListener('DOMContentLoaded', function() {
+    const reportForm = document.getElementById('reportForm');
+    const generateReportBtn = document.getElementById('generateReport');
+
+    if (reportForm && generateReportBtn) {
+        generateReportBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            reportForm.submit();
+        });
+    }
+});
+</script>
 {% endblock %}
