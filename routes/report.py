@@ -11,11 +11,22 @@ from forms import ReportDateRangeForm
 
 report_bp = Blueprint('report', __name__, url_prefix='/reports')
 
-@report_bp.route('/sales')
+@report_bp.route('/sales', methods=['GET', 'POST'])
 @login_required
 def sales():
     """销售统计报表"""
     form = ReportDateRangeForm()
+    
+    # 处理表单提交
+    if form.validate_on_submit():
+        start_date = form.start_date.data.strftime('%Y-%m-%d')
+        end_date = form.end_date.data.strftime('%Y-%m-%d')
+        return render_template(
+            'report/sales.html',
+            form=form,
+            start_date=start_date,
+            end_date=end_date
+        )
     
     # 获取日期范围
     start_date = request.args.get('start_date')
@@ -27,12 +38,21 @@ def sales():
     if not end_date:
         end_date = datetime.now().strftime('%Y-%m-%d')
     
-    # 转换为日期对象
-    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
-    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
-    
-    form.start_date.data = start_date_obj
-    form.end_date.data = end_date_obj
+    try:
+        # 转换为日期对象
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+        
+        form.start_date.data = start_date_obj
+        form.end_date.data = end_date_obj
+    except ValueError:
+        flash('日期格式无效，请使用YYYY-MM-DD格式', 'error')
+        start_date_obj = datetime.now().replace(day=1)
+        end_date_obj = datetime.now()
+        form.start_date.data = start_date_obj
+        form.end_date.data = end_date_obj
+        start_date = start_date_obj.strftime('%Y-%m-%d')
+        end_date = end_date_obj.strftime('%Y-%m-%d')
     
     # 按分类的销售额统计
     category_sales = db.session.query(
