@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}原材料管理 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>原材料管理</h2>
+    <a href="{{ url_for('raw_material.add') }}" class="btn">添加原材料</a>
+</div>
+
+<!-- 搜索表单 -->
+<form action="{{ url_for('raw_material.list') }}" method="get" class="search-form">
+    <input type="text" name="search" placeholder="搜索原材料名称或单位" value="{{ search }}">
+    <button type="submit" class="btn">搜索</button>
+    {% if search %}
+    <a href="{{ url_for('raw_material.list') }}" class="btn btn-secondary">清除</a>
+    {% endif %}
+</form>
+
+<!-- 原材料列表 -->
+{% if raw_materials.items %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>名称</th>
+            <th>单位</th>
+            <th>库存数量</th>
+            <th>单位成本</th>
+            <th>安全库存</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for material in raw_materials.items %}
+        <tr>
+            <td>{{ material.id }}</td>
+            <td>{{ material.name }}</td>
+            <td>{{ material.unit }}</td>
+            <td {% if material.safety_stock and material.stock_quantity <= material.safety_stock %}class="low-stock"{% endif %}>
+                {{ material.stock_quantity }}
+            </td>
+            <td>{{ "%.2f"|format(material.unit_cost) }}</td>
+            <td>{{ material.safety_stock or '未设置' }}</td>
+            <td>
+                <a href="{{ url_for('raw_material.detail', id=material.id) }}" class="btn btn-sm">查看</a>
+                <a href="{{ url_for('raw_material.edit', id=material.id) }}" class="btn btn-sm">编辑</a>
+                <a href="{{ url_for('raw_material.adjust_stock', id=material.id) }}" class="btn btn-sm">调整库存</a>
+                <button onclick="confirmDelete('{{ material.name }}', '{{ url_for('raw_material.delete', id=material.id) }}')" class="btn btn-sm btn-danger">删除</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 分页 -->
+<div class="pagination-container">
+    <ul class="pagination">
+        {% if raw_materials.has_prev %}
+        <li><a href="{{ url_for('raw_material.list', page=raw_materials.prev_num, search=search) }}">上一页</a></li>
+        {% endif %}
+        
+        {% for page_num in raw_materials.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == raw_materials.page %}
+                <li class="active"><span>{{ page_num }}</span></li>
+                {% else %}
+                <li><a href="{{ url_for('raw_material.list', page=page_num, search=search) }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% else %}
+            <li><span>...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if raw_materials.has_next %}
+        <li><a href="{{ url_for('raw_material.list', page=raw_materials.next_num, search=search) }}">下一页</a></li>
+        {% endif %}
+    </ul>
+    <div>
+        显示 {{ raw_materials.items|length }} 条，共 {{ raw_materials.total }} 条
+    </div>
+</div>
+{% else %}
+<p>暂无原材料记录</p>
+{% endif %}
+
+<!-- 删除确认模态框 -->
+<div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 100;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; min-width: 300px;">
+        <h3>确认删除</h3>
+        <p>您确定要删除原材料 "<span id="materialName"></span>" 吗？此操作不可逆。</p>
+        <div style="text-align: right; margin-top: 20px;">
+            <button onclick="closeModal()" class="btn btn-secondary">取消</button>
+            <form id="deleteForm" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-danger">确认删除</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(name, url) {
+    document.getElementById('materialName').textContent = name;
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    var modal = document.getElementById('deleteModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}

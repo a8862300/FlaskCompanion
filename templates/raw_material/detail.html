@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}原材料详情 - {{ raw_material.name }} - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>原材料详情</h2>
+    <div>
+        <a href="{{ url_for('raw_material.list') }}" class="btn btn-secondary">返回列表</a>
+        <a href="{{ url_for('raw_material.edit', id=raw_material.id) }}" class="btn">编辑</a>
+        <a href="{{ url_for('raw_material.adjust_stock', id=raw_material.id) }}" class="btn">调整库存</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">基本信息</div>
+    <div class="card-body">
+        <div class="field-row">
+            <span class="field-label">原材料名称:</span>
+            <span>{{ raw_material.name }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">单位:</span>
+            <span>{{ raw_material.unit }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">库存数量:</span>
+            <span {% if raw_material.safety_stock and raw_material.stock_quantity <= raw_material.safety_stock %}class="low-stock"{% endif %}>
+                {{ raw_material.stock_quantity }} {{ raw_material.unit }}
+            </span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">单位成本:</span>
+            <span>{{ "%.2f"|format(raw_material.unit_cost) }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">安全库存量:</span>
+            <span>{{ raw_material.safety_stock or '未设置' }} {{ raw_material.unit if raw_material.safety_stock else '' }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">创建时间:</span>
+            <span>{{ raw_material.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- 库存调整历史 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">库存调整历史</div>
+    <div class="card-body">
+        {% if adjustments %}
+        <table>
+            <thead>
+                <tr>
+                    <th>调整日期</th>
+                    <th>调整前数量</th>
+                    <th>调整后数量</th>
+                    <th>调整数量</th>
+                    <th>调整原因</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adjustment in adjustments %}
+                <tr>
+                    <td>{{ adjustment.adjustment_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ adjustment.quantity_before }}</td>
+                    <td>{{ adjustment.quantity_after }}</td>
+                    <td>{{ adjustment.adjustment_quantity }}</td>
+                    <td>{{ adjustment.reason }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无库存调整历史</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 采购历史 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">采购历史</div>
+    <div class="card-body">
+        {% if purchases %}
+        <table>
+            <thead>
+                <tr>
+                    <th>采购日期</th>
+                    <th>供应商</th>
+                    <th>数量</th>
+                    <th>单价</th>
+                    <th>总价</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchases %}
+                <tr>
+                    <td>{{ purchase.purchase_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ purchase.supplier.name }}</td>
+                    <td>{{ purchase.quantity }} {{ raw_material.unit }}</td>
+                    <td>{{ "%.2f"|format(purchase.unit_price) }}</td>
+                    <td>{{ "%.2f"|format(purchase.total_price) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="margin-top: 0.5rem; text-align: right;">
+            <a href="{{ url_for('purchase.add') }}?raw_material_id={{ raw_material.id }}" class="btn">新增采购记录</a>
+        </div>
+        {% else %}
+        <p>暂无采购历史</p>
+        <a href="{{ url_for('purchase.add') }}?raw_material_id={{ raw_material.id }}" class="btn">新增采购记录</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

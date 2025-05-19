@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}订单管理 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>订单管理</h2>
+    <a href="{{ url_for('order.add') }}" class="btn">添加订单</a>
+</div>
+
+<!-- 高级筛选表单 -->
+<div class="filter-form">
+    <form action="{{ url_for('order.list') }}" method="get">
+        <div class="form-row">
+            <div class="form-group">
+                <label>客户</label>
+                <select name="customer_id" class="form-control">
+                    <option value="">-- 所有客户 --</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}" {% if filter.customer_id == customer.id %}selected{% endif %}>
+                        {{ customer.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>订单状态</label>
+                <select name="status" class="form-control">
+                    <option value="">-- 所有状态 --</option>
+                    {% for status_value, status_label in status_options %}
+                    <option value="{{ status_value }}" {% if filter.status == status_value %}selected{% endif %}>
+                        {{ status_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>商品分类</label>
+                <select name="category_id" class="form-control">
+                    <option value="">-- 所有分类 --</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if filter.category_id == category.id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>开始日期</label>
+                <input type="date" name="start_date" value="{{ filter.start_date }}" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>结束日期</label>
+                <input type="date" name="end_date" value="{{ filter.end_date }}" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>时间周期</label>
+                <select name="period" class="form-control">
+                    <option value="">-- 自定义时间 --</option>
+                    {% for period_value, period_label in period_options %}
+                    <option value="{{ period_value }}" {% if filter.period == period_value %}selected{% endif %}>
+                        {{ period_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div style="text-align: right;">
+            <button type="submit" class="btn">搜索</button>
+            <a href="{{ url_for('order.list') }}" class="btn btn-secondary">清除</a>
+        </div>
+    </form>
+</div>
+
+<!-- 订单列表 -->
+{% if orders.items %}
+<table>
+    <thead>
+        <tr>
+            <th>订单号</th>
+            <th>日期</th>
+            <th>客户</th>
+            <th>状态</th>
+            <th>支付方式</th>
+            <th>总金额</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders.items %}
+        <tr>
+            <td>{{ order.order_number }}</td>
+            <td>{{ order.order_date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ order.customer.name }}</td>
+            <td>{{ order.status }}</td>
+            <td>{{ order.payment_method }}</td>
+            <td>{{ "%.2f"|format(order.total_amount) }}</td>
+            <td>
+                <a href="{{ url_for('order.detail', id=order.id) }}" class="btn btn-sm">查看</a>
+                <a href="{{ url_for('order.edit', id=order.id) }}" class="btn btn-sm">编辑</a>
+                <a href="{{ url_for('order.outbound_slip', id=order.id) }}" class="btn btn-sm" target="_blank">出库单</a>
+                <button onclick="confirmDelete('{{ order.order_number }}', '{{ url_for('order.delete', id=order.id) }}')" class="btn btn-sm btn-danger">删除</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 分页 -->
+<div class="pagination-container">
+    <ul class="pagination">
+        {% if orders.has_prev %}
+        <li><a href="{{ url_for('order.list', page=orders.prev_num, customer_id=filter.customer_id, status=filter.status, category_id=filter.category_id, start_date=filter.start_date, end_date=filter.end_date, period=filter.period) }}">上一页</a></li>
+        {% endif %}
+        
+        {% for page_num in orders.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == orders.page %}
+                <li class="active"><span>{{ page_num }}</span></li>
+                {% else %}
+                <li><a href="{{ url_for('order.list', page=page_num, customer_id=filter.customer_id, status=filter.status, category_id=filter.category_id, start_date=filter.start_date, end_date=filter.end_date, period=filter.period) }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% else %}
+            <li><span>...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if orders.has_next %}
+        <li><a href="{{ url_for('order.list', page=orders.next_num, customer_id=filter.customer_id, status=filter.status, category_id=filter.category_id, start_date=filter.start_date, end_date=filter.end_date, period=filter.period) }}">下一页</a></li>
+        {% endif %}
+    </ul>
+    <div>
+        显示 {{ orders.items|length }} 条，共 {{ orders.total }} 条
+    </div>
+</div>
+{% else %}
+<p>暂无订单记录</p>
+{% endif %}
+
+<!-- 删除确认模态框 -->
+<div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 100;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; min-width: 300px;">
+        <h3>确认删除</h3>
+        <p>您确定要删除订单 "<span id="orderNumber"></span>" 吗？此操作不可逆。</p>
+        <div style="text-align: right; margin-top: 20px;">
+            <button onclick="closeModal()" class="btn btn-secondary">取消</button>
+            <form id="deleteForm" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-danger">确认删除</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(orderNumber, url) {
+    document.getElementById('orderNumber').textContent = orderNumber;
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    var modal = document.getElementById('deleteModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}

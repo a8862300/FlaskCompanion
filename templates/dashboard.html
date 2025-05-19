@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}仪表盘 - 库存管理系统{% endblock %}
+
+{% block content %}
+<h2>系统概览</h2>
+
+<!-- 统计数据卡片 -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.user_count }}</div>
+        <div class="stat-label">用户数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.customer_count }}</div>
+        <div class="stat-label">客户数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.product_count }}</div>
+        <div class="stat-label">商品数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.raw_material_count }}</div>
+        <div class="stat-label">原材料数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.order_count }}</div>
+        <div class="stat-label">订单数</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+    <!-- 近期订单 -->
+    <div class="card">
+        <div class="card-header">近期订单</div>
+        <div class="card-body">
+            {% if recent_orders %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>客户</th>
+                        <th>日期</th>
+                        <th>金额</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td><a href="{{ url_for('order.detail', id=order.id) }}">{{ order.order_number }}</a></td>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.order_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ "%.2f"|format(order.total_amount) }}</td>
+                        <td>{{ order.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="margin-top: 0.5rem; text-align: right;">
+                <a href="{{ url_for('order.list') }}">查看全部订单</a>
+            </div>
+            {% else %}
+            <p>暂无订单记录</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 低库存商品 -->
+    <div class="card">
+        <div class="card-header">低库存商品</div>
+        <div class="card-body">
+            {% if low_stock_products %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>商品名称</th>
+                        <th>SKU</th>
+                        <th>当前库存</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in low_stock_products %}
+                    <tr>
+                        <td><a href="{{ url_for('product.detail', id=product.id) }}">{{ product.name }}</a></td>
+                        <td>{{ product.sku }}</td>
+                        <td class="low-stock">{{ product.stock_quantity }}</td>
+                        <td>
+                            <a href="{{ url_for('product.adjust_stock', id=product.id) }}" class="btn btn-sm">调整库存</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="margin-top: 0.5rem; text-align: right;">
+                <a href="{{ url_for('product.list') }}">查看全部商品</a>
+            </div>
+            {% else %}
+            <p>没有低库存商品</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 低库存原材料 -->
+    <div class="card">
+        <div class="card-header">低库存原材料</div>
+        <div class="card-body">
+            {% if low_stock_materials %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>原材料名称</th>
+                        <th>当前库存</th>
+                        <th>安全库存</th>
+                        <th>单位</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in low_stock_materials %}
+                    <tr>
+                        <td><a href="{{ url_for('raw_material.detail', id=material.id) }}">{{ material.name }}</a></td>
+                        <td class="low-stock">{{ material.stock_quantity }}</td>
+                        <td>{{ material.safety_stock }}</td>
+                        <td>{{ material.unit }}</td>
+                        <td>
+                            <a href="{{ url_for('raw_material.adjust_stock', id=material.id) }}" class="btn btn-sm">调整库存</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="margin-top: 0.5rem; text-align: right;">
+                <a href="{{ url_for('raw_material.list') }}">查看全部原材料</a>
+            </div>
+            {% else %}
+            <p>没有低库存原材料</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 按分类的商品数量 -->
+    <div class="card">
+        <div class="card-header">按分类的商品数量</div>
+        <div class="card-body">
+            {% if category_products %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>分类名称</th>
+                        <th>商品数量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in category_products %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>暂无分类数据</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 销售额最高的商品 -->
+{% if top_products %}
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">销售额最高的商品</div>
+    <div class="card-body">
+        <table>
+            <thead>
+                <tr>
+                    <th>商品名称</th>
+                    <th>销售额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_products %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ "%.2f"|format(item.total_sales) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="margin-top: 0.5rem; text-align: right;">
+            <a href="{{ url_for('report.sales') }}">查看完整销售报表</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

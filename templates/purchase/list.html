@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}原材料采购管理 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>原材料采购管理</h2>
+    <a href="{{ url_for('purchase.add') }}" class="btn">添加采购记录</a>
+</div>
+
+<!-- 筛选表单 -->
+<div class="filter-form">
+    <form action="{{ url_for('purchase.list') }}" method="get">
+        <div class="form-row">
+            <div class="form-group">
+                <label>供应商</label>
+                <select name="supplier_id" class="form-control">
+                    <option value="">-- 所有供应商 --</option>
+                    {% for supplier in suppliers %}
+                    <option value="{{ supplier.id }}" {% if filter.supplier_id == supplier.id %}selected{% endif %}>
+                        {{ supplier.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>原材料</label>
+                <select name="raw_material_id" class="form-control">
+                    <option value="">-- 所有原材料 --</option>
+                    {% for material in raw_materials %}
+                    <option value="{{ material.id }}" {% if filter.raw_material_id == material.id %}selected{% endif %}>
+                        {{ material.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>开始日期</label>
+                <input type="date" name="start_date" value="{{ filter.start_date }}" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>结束日期</label>
+                <input type="date" name="end_date" value="{{ filter.end_date }}" class="form-control">
+            </div>
+        </div>
+        
+        <div style="text-align: right;">
+            <button type="submit" class="btn">搜索</button>
+            <a href="{{ url_for('purchase.list') }}" class="btn btn-secondary">清除</a>
+        </div>
+    </form>
+</div>
+
+<!-- 采购列表 -->
+{% if purchases.items %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>采购日期</th>
+            <th>原材料</th>
+            <th>供应商</th>
+            <th>数量</th>
+            <th>单价</th>
+            <th>总价</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for purchase in purchases.items %}
+        <tr>
+            <td>{{ purchase.id }}</td>
+            <td>{{ purchase.purchase_date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ purchase.raw_material.name }}</td>
+            <td>{{ purchase.supplier.name }}</td>
+            <td>{{ purchase.quantity }} {{ purchase.raw_material.unit }}</td>
+            <td>{{ "%.2f"|format(purchase.unit_price) }}</td>
+            <td>{{ "%.2f"|format(purchase.total_price) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 分页 -->
+<div class="pagination-container">
+    <ul class="pagination">
+        {% if purchases.has_prev %}
+        <li><a href="{{ url_for('purchase.list', page=purchases.prev_num, supplier_id=filter.supplier_id, raw_material_id=filter.raw_material_id, start_date=filter.start_date, end_date=filter.end_date) }}">上一页</a></li>
+        {% endif %}
+        
+        {% for page_num in purchases.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == purchases.page %}
+                <li class="active"><span>{{ page_num }}</span></li>
+                {% else %}
+                <li><a href="{{ url_for('purchase.list', page=page_num, supplier_id=filter.supplier_id, raw_material_id=filter.raw_material_id, start_date=filter.start_date, end_date=filter.end_date) }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% else %}
+            <li><span>...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if purchases.has_next %}
+        <li><a href="{{ url_for('purchase.list', page=purchases.next_num, supplier_id=filter.supplier_id, raw_material_id=filter.raw_material_id, start_date=filter.start_date, end_date=filter.end_date) }}">下一页</a></li>
+        {% endif %}
+    </ul>
+    <div>
+        显示 {{ purchases.items|length }} 条，共 {{ purchases.total }} 条
+    </div>
+</div>
+{% else %}
+<p>暂无采购记录</p>
+{% endif %}
+{% endblock %}

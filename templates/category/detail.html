@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}分类详情 - {{ category.name }} - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>分类详情</h2>
+    <div>
+        <a href="{{ url_for('category.list') }}" class="btn btn-secondary">返回列表</a>
+        <a href="{{ url_for('category.edit', id=category.id) }}" class="btn">编辑</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">基本信息</div>
+    <div class="card-body">
+        <div class="field-row">
+            <span class="field-label">分类名称:</span>
+            <span>{{ category.name }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">描述:</span>
+            <span>{{ category.description or '无描述' }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">创建时间:</span>
+            <span>{{ category.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- 分类下的商品列表 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">分类下的商品</div>
+    <div class="card-body">
+        {% if category.products %}
+        <table>
+            <thead>
+                <tr>
+                    <th>商品名称</th>
+                    <th>SKU</th>
+                    <th>销售价格</th>
+                    <th>成本价格</th>
+                    <th>库存</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in category.products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.sku }}</td>
+                    <td>{{ "%.2f"|format(product.selling_price) }}</td>
+                    <td>{{ "%.2f"|format(product.cost_price) }}</td>
+                    <td>{{ product.stock_quantity }}</td>
+                    <td>
+                        <a href="{{ url_for('product.detail', id=product.id) }}" class="btn btn-sm">查看详情</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="margin-top: 0.5rem; text-align: right;">
+            <a href="{{ url_for('product.add') }}?category_id={{ category.id }}" class="btn">添加商品到此分类</a>
+        </div>
+        {% else %}
+        <p>该分类下暂无商品</p>
+        <a href="{{ url_for('product.add') }}?category_id={{ category.id }}" class="btn">添加商品到此分类</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

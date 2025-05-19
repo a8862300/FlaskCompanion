@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>{{ title }}</h2>
+    <a href="{{ url_for('purchase.list') }}" class="btn btn-secondary">返回列表</a>
+</div>
+
+<form method="post" id="purchaseForm">
+    {{ form.csrf_token }}
+    
+    <div class="form-group">
+        {{ form.purchase_date.label }}
+        {{ form.purchase_date(class="form-control", type="date") }}
+        {% if form.purchase_date.errors %}
+        <div class="error-field">
+            {% for error in form.purchase_date.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.raw_material_id.label }}
+        {{ form.raw_material_id(class="form-control", id="rawMaterialSelect") }}
+        {% if form.raw_material_id.errors %}
+        <div class="error-field">
+            {% for error in form.raw_material_id.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.supplier_id.label }}
+        {{ form.supplier_id(class="form-control") }}
+        {% if form.supplier_id.errors %}
+        <div class="error-field">
+            {% for error in form.supplier_id.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-row" style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+            {{ form.quantity.label }}
+            {{ form.quantity(class="form-control", id="quantity") }}
+            {% if form.quantity.errors %}
+            <div class="error-field">
+                {% for error in form.quantity.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group" style="flex: 1;">
+            {{ form.unit_price.label }}
+            {{ form.unit_price(class="form-control", id="unitPrice") }}
+            {% if form.unit_price.errors %}
+            <div class="error-field">
+                {% for error in form.unit_price.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="form-group">
+        {{ form.total_price.label }}
+        {{ form.total_price(class="form-control", id="totalPrice", readonly=true) }}
+        {% if form.total_price.errors %}
+        <div class="error-field">
+            {% for error in form.total_price.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.submit(class="btn") }}
+    </div>
+</form>
+
+<script>
+// 自动计算总价
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.getElementById('quantity');
+    const unitPriceInput = document.getElementById('unitPrice');
+    const totalPriceInput = document.getElementById('totalPrice');
+    
+    function calculateTotal() {
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const unitPrice = parseFloat(unitPriceInput.value) || 0;
+        const total = quantity * unitPrice;
+        totalPriceInput.value = total.toFixed(2);
+    }
+    
+    quantityInput.addEventListener('input', calculateTotal);
+    unitPriceInput.addEventListener('input', calculateTotal);
+    
+    // 初始计算一次（如果表单已有值）
+    calculateTotal();
+    
+    // 获取URL参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawMaterialId = urlParams.get('raw_material_id');
+    const supplierId = urlParams.get('supplier_id');
+    
+    // 如果URL中有原材料ID，自动选中
+    if (rawMaterialId) {
+        const rawMaterialSelect = document.getElementById('rawMaterialSelect');
+        if (rawMaterialSelect) {
+            rawMaterialSelect.value = rawMaterialId;
+        }
+    }
+    
+    // 如果URL中有供应商ID，自动选中
+    if (supplierId) {
+        const supplierSelect = document.getElementById('supplier_id');
+        if (supplierSelect) {
+            supplierSelect.value = supplierId;
+        }
+    }
+});
+</script>
+{% endblock %}

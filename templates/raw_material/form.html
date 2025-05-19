@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>{{ title }}</h2>
+    <a href="{{ url_for('raw_material.list') }}" class="btn btn-secondary">返回列表</a>
+</div>
+
+<form method="post">
+    {{ form.csrf_token }}
+    
+    <div class="form-group">
+        {{ form.name.label }}
+        {{ form.name(class="form-control") }}
+        {% if form.name.errors %}
+        <div class="error-field">
+            {% for error in form.name.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.unit.label }}
+        {{ form.unit(class="form-control", placeholder="例如：千克, 米, 个, 件") }}
+        {% if form.unit.errors %}
+        <div class="error-field">
+            {% for error in form.unit.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-row" style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+            {{ form.stock_quantity.label }}
+            {{ form.stock_quantity(class="form-control") }}
+            {% if form.stock_quantity.errors %}
+            <div class="error-field">
+                {% for error in form.stock_quantity.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group" style="flex: 1;">
+            {{ form.unit_cost.label }}
+            {{ form.unit_cost(class="form-control") }}
+            {% if form.unit_cost.errors %}
+            <div class="error-field">
+                {% for error in form.unit_cost.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="form-group">
+        {{ form.safety_stock.label }}
+        {{ form.safety_stock(class="form-control", placeholder="当库存低于此数量时会在系统中显示警告") }}
+        <small>可选，留空表示不设置安全库存</small>
+        {% if form.safety_stock.errors %}
+        <div class="error-field">
+            {% for error in form.safety_stock.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.submit(class="btn") }}
+    </div>
+</form>
+{% endblock %}

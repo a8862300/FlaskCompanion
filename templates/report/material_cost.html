@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}原材料支出报告 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>原材料支出报告</h2>
+    <div>
+        <a href="{{ url_for('report.material_cost', export='csv', start_date=start_date, end_date=end_date) }}" class="btn">导出CSV</a>
+    </div>
+</div>
+
+<!-- 日期范围筛选 -->
+<div class="filter-form">
+    <form action="{{ url_for('report.material_cost') }}" method="get">
+        <div class="form-row">
+            <div class="form-group">
+                <label>开始日期</label>
+                <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>结束日期</label>
+                <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <button type="submit" class="btn">生成报表</button>
+        </div>
+    </form>
+</div>
+
+<!-- 月度原材料支出 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">月度原材料支出统计</div>
+    <div class="card-body">
+        {% if monthly_costs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>年</th>
+                    <th>月</th>
+                    <th>总支出</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in monthly_costs %}
+                <tr>
+                    <td>{{ item.year|int }}</td>
+                    <td>{{ item.month|int }}</td>
+                    <td>{{ "%.2f"|format(item.total_cost) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>在所选时间范围内没有原材料支出数据</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 原材料采购排名 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">原材料采购排名</div>
+    <div class="card-body">
+        {% if top_materials %}
+        <table>
+            <thead>
+                <tr>
+                    <th>原材料名称</th>
+                    <th>单位</th>
+                    <th>采购数量</th>
+                    <th>采购总额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_materials %}
+                <tr>
+                    <td>{{ item.material }}</td>
+                    <td>{{ item.unit }}</td>
+                    <td>{{ item.total_quantity }}</td>
+                    <td>{{ "%.2f"|format(item.total_cost) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>在所选时间范围内没有原材料采购数据</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 供应商采购统计 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">供应商采购统计</div>
+    <div class="card-body">
+        {% if supplier_costs %}
+        <table>
+            <thead>
+                <tr>
+                    <th>供应商名称</th>
+                    <th>采购次数</th>
+                    <th>采购总额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in supplier_costs %}
+                <tr>
+                    <td>{{ item.supplier }}</td>
+                    <td>{{ item.purchase_count }}</td>
+                    <td>{{ "%.2f"|format(item.total_cost) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>在所选时间范围内没有供应商采购数据</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

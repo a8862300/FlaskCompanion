@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}供应商详情 - {{ supplier.name }} - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>供应商详情</h2>
+    <div>
+        <a href="{{ url_for('supplier.list') }}" class="btn btn-secondary">返回列表</a>
+        <a href="{{ url_for('supplier.edit', id=supplier.id) }}" class="btn">编辑</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">基本信息</div>
+    <div class="card-body">
+        <div class="field-row">
+            <span class="field-label">供应商名称:</span>
+            <span>{{ supplier.name }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">联系人:</span>
+            <span>{{ supplier.contact or '未设置' }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">电话:</span>
+            <span>{{ supplier.phone or '未设置' }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">地址:</span>
+            <span>{{ supplier.address or '未设置' }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">创建时间:</span>
+            <span>{{ supplier.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- 提供的商品列表 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">提供的商品</div>
+    <div class="card-body">
+        {% if supplier.products %}
+        <table>
+            <thead>
+                <tr>
+                    <th>商品名称</th>
+                    <th>SKU</th>
+                    <th>销售价格</th>
+                    <th>成本价格</th>
+                    <th>库存</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in supplier.products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.sku }}</td>
+                    <td>{{ "%.2f"|format(product.selling_price) }}</td>
+                    <td>{{ "%.2f"|format(product.cost_price) }}</td>
+                    <td>{{ product.stock_quantity }}</td>
+                    <td>
+                        <a href="{{ url_for('product.detail', id=product.id) }}" class="btn btn-sm">查看详情</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>该供应商暂未提供任何商品</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 采购记录 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">原材料采购记录</div>
+    <div class="card-body">
+        {% if supplier.raw_material_purchases %}
+        <table>
+            <thead>
+                <tr>
+                    <th>采购日期</th>
+                    <th>原材料</th>
+                    <th>数量</th>
+                    <th>单价</th>
+                    <th>总价</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in supplier.raw_material_purchases %}
+                <tr>
+                    <td>{{ purchase.purchase_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ purchase.raw_material.name }}</td>
+                    <td>{{ purchase.quantity }} {{ purchase.raw_material.unit }}</td>
+                    <td>{{ "%.2f"|format(purchase.unit_price) }}</td>
+                    <td>{{ "%.2f"|format(purchase.total_price) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="margin-top: 0.5rem;">
+            <a href="{{ url_for('purchase.add') }}?supplier_id={{ supplier.id }}" class="btn">新建采购记录</a>
+        </div>
+        {% else %}
+        <p>该供应商暂无采购记录</p>
+        <a href="{{ url_for('purchase.add') }}?supplier_id={{ supplier.id }}" class="btn">新建采购记录</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

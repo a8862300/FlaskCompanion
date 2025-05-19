@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>{{ title }}</h2>
+    <a href="{{ url_for('raw_material.detail', id=raw_material.id) }}" class="btn btn-secondary">返回原材料详情</a>
+</div>
+
+<div class="card" style="margin-bottom: 1rem;">
+    <div class="card-header">原材料信息</div>
+    <div class="card-body">
+        <div class="field-row">
+            <span class="field-label">原材料名称:</span>
+            <span>{{ raw_material.name }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">单位:</span>
+            <span>{{ raw_material.unit }}</span>
+        </div>
+        <div class="field-row">
+            <span class="field-label">当前库存:</span>
+            <span>{{ raw_material.stock_quantity }} {{ raw_material.unit }}</span>
+        </div>
+        {% if raw_material.safety_stock %}
+        <div class="field-row">
+            <span class="field-label">安全库存:</span>
+            <span>{{ raw_material.safety_stock }} {{ raw_material.unit }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<form method="post">
+    {{ form.csrf_token }}
+    
+    {{ form.adjustment_type(style="display: none;") }}
+    {{ form.product_id(style="display: none;") }}
+    {{ form.raw_material_id(style="display: none;") }}
+    
+    <div class="form-group">
+        {{ form.adjustment_quantity.label }}
+        {{ form.adjustment_quantity(class="form-control") }}
+        <small>正数表示增加库存，负数表示减少库存</small>
+        {% if form.adjustment_quantity.errors %}
+        <div class="error-field">
+            {% for error in form.adjustment_quantity.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.reason.label }}
+        {{ form.reason(class="form-control", placeholder="请输入库存调整原因，例如：盘点调整、领料出库、退料入库等") }}
+        {% if form.reason.errors %}
+        <div class="error-field">
+            {% for error in form.reason.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.submit(class="btn") }}
+    </div>
+</form>
+{% endblock %}

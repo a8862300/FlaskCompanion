@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - 库存管理系统{% endblock %}
+
+{% block head %}
+<style>
+    .order-items-table {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .order-items-table th,
+    .order-items-table td {
+        padding: 0.5rem;
+    }
+    .no-items-message {
+        padding: 1rem;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .product-select {
+        width: 100%;
+    }
+    .quantity-input,
+    .price-input {
+        width: 80px;
+    }
+    .item-subtotal {
+        font-weight: bold;
+    }
+    .remove-item {
+        color: #dc3545;
+        cursor: pointer;
+    }
+    .add-item-btn {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>{{ title }}</h2>
+    <a href="{{ url_for('order.list') }}" class="btn btn-secondary">返回列表</a>
+</div>
+
+<form method="post" id="orderForm">
+    {{ form.csrf_token }}
+    
+    <div class="card">
+        <div class="card-header">基本信息</div>
+        <div class="card-body">
+            <div class="form-row" style="display: flex; gap: 1rem;">
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    {{ form.order_date.label }}
+                    {{ form.order_date(class="form-control", type="date") }}
+                    {% if form.order_date.errors %}
+                    <div class="error-field">
+                        {% for error in form.order_date.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    {{ form.customer_id.label }}
+                    {{ form.customer_id(class="form-control") }}
+                    {% if form.customer_id.errors %}
+                    <div class="error-field">
+                        {% for error in form.customer_id.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row" style="display: flex; gap: 1rem;">
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    {{ form.status.label }}
+                    {{ form.status(class="form-control") }}
+                    {% if form.status.errors %}
+                    <div class="error-field">
+                        {% for error in form.status.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group" style="flex: 1; min-width: 200px;">
+                    {{ form.payment_method.label }}
+                    {{ form.payment_method(class="form-control") }}
+                    {% if form.payment_method.errors %}
+                    <div class="error-field">
+                        {% for error in form.payment_method.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                {{ form.notes.label }}
+                {{ form.notes(class="form-control", rows=3) }}
+                {% if form.notes.errors %}
+                <div class="error-field">
+                    {% for error in form.notes.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="card" style="margin-top: 1rem;">
+        <div class="card-header">订单项</div>
+        <div class="card-body">
+            <button type="button" id="addItemBtn" class="btn add-item-btn">添加商品</button>
+            
+            <div id="orderItemsContainer">
+                <table id="orderItemsTable" class="order-items-table" {% if not order or not order_items %}style="display: none;"{% endif %}>
+                    <thead>
+                        <tr>
+                            <th>商品</th>
+                            <th>数量</th>
+                            <th>单价</th>
+                            <th>小计</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderItemsBody">
+                        {% if order and order_items %}
+                            {% for item in order_items %}
+                            <tr class="item-row">
+                                <td>
+                                    <select name="product_id[]" class="product-select" required onchange="updateProductPrice(this)">
+                                        <option value="">-- 选择商品 --</option>
+                                        {% for p in products %}
+                                        <option value="{{ p.id }}" data-price="{{ p.selling_price }}" data-stock="{{ p.stock_quantity }}" {% if p.id == item.product_id %}selected{% endif %}>
+                                            {{ p.name }} ({{ p.sku }}) - 库存: {{ p.stock_quantity }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="quantity[]" class="quantity-input" value="{{ item.quantity }}" min="1" required onchange="updateSubtotal(this.parentNode.parentNode)">
+                                </td>
+                                <td>
+                                    <input type="number" name="unit_price[]" class="price-input" value="{{ "%.2f"|format(item.unit_price) }}" min="0" step="0.01" required onchange="updateSubtotal(this.parentNode.parentNode)">
+                                </td>
+                                <td class="item-subtotal">{{ "%.2f"|format(item.subtotal) }}</td>
+                                <td>
+                                    <span class="remove-item" onclick="removeItem(this)">✕</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: right; font-weight: bold;">订单总金额:</td>
+                            <td id="orderTotal" style="font-weight: bold;">{{ "%.2f"|format(order.total_amount) if order else "0.00" }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <div id="noItemsMessage" class="no-items-message" {% if order and order_items %}style="display: none;"{% endif %}>
+                    订单中还没有商品，请点击"添加商品"按钮添加
+                </div>
+            </div>
+            
+            {{ form.total_amount(id="totalAmountInput", style="display: none;") }}
+        </div>
+    </div>
+    
+    <div class="form-group" style="margin-top: 1rem;">
+        {{ form.submit(class="btn") }}
+    </div>
+</form>
+
+<script src="{{ url_for('static', filename='js/order.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}供应商管理 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>供应商管理</h2>
+    <a href="{{ url_for('supplier.add') }}" class="btn">添加供应商</a>
+</div>
+
+<!-- 搜索表单 -->
+<form action="{{ url_for('supplier.list') }}" method="get" class="search-form">
+    <input type="text" name="search" placeholder="搜索供应商名称、联系人或电话" value="{{ search }}">
+    <button type="submit" class="btn">搜索</button>
+    {% if search %}
+    <a href="{{ url_for('supplier.list') }}" class="btn btn-secondary">清除</a>
+    {% endif %}
+</form>
+
+<!-- 供应商列表 -->
+{% if suppliers.items %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>供应商名称</th>
+            <th>联系人</th>
+            <th>电话</th>
+            <th>地址</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for supplier in suppliers.items %}
+        <tr>
+            <td>{{ supplier.id }}</td>
+            <td>{{ supplier.name }}</td>
+            <td>{{ supplier.contact }}</td>
+            <td>{{ supplier.phone }}</td>
+            <td>{{ supplier.address }}</td>
+            <td>
+                <a href="{{ url_for('supplier.detail', id=supplier.id) }}" class="btn btn-sm">查看</a>
+                <a href="{{ url_for('supplier.edit', id=supplier.id) }}" class="btn btn-sm">编辑</a>
+                <button onclick="confirmDelete('{{ supplier.name }}', '{{ url_for('supplier.delete', id=supplier.id) }}')" class="btn btn-sm btn-danger">删除</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- 分页 -->
+<div class="pagination-container">
+    <ul class="pagination">
+        {% if suppliers.has_prev %}
+        <li><a href="{{ url_for('supplier.list', page=suppliers.prev_num, search=search) }}">上一页</a></li>
+        {% endif %}
+        
+        {% for page_num in suppliers.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                {% if page_num == suppliers.page %}
+                <li class="active"><span>{{ page_num }}</span></li>
+                {% else %}
+                <li><a href="{{ url_for('supplier.list', page=page_num, search=search) }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% else %}
+            <li><span>...</span></li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if suppliers.has_next %}
+        <li><a href="{{ url_for('supplier.list', page=suppliers.next_num, search=search) }}">下一页</a></li>
+        {% endif %}
+    </ul>
+    <div>
+        显示 {{ suppliers.items|length }} 条，共 {{ suppliers.total }} 条
+    </div>
+</div>
+{% else %}
+<p>暂无供应商记录</p>
+{% endif %}
+
+<!-- 删除确认模态框 -->
+<div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 100;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; min-width: 300px;">
+        <h3>确认删除</h3>
+        <p>您确定要删除供应商 "<span id="supplierName"></span>" 吗？此操作不可逆。</p>
+        <div style="text-align: right; margin-top: 20px;">
+            <button onclick="closeModal()" class="btn btn-secondary">取消</button>
+            <form id="deleteForm" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-danger">确认删除</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(name, url) {
+    document.getElementById('supplierName').textContent = name;
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    var modal = document.getElementById('deleteModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}

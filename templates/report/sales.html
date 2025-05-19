@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}销售统计报表 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>销售统计报表</h2>
+    <div>
+        <a href="{{ url_for('report.sales', export='csv', start_date=start_date, end_date=end_date) }}" class="btn">导出CSV</a>
+    </div>
+</div>
+
+<!-- 日期范围筛选 -->
+<div class="filter-form">
+    <form action="{{ url_for('report.sales') }}" method="get">
+        <div class="form-row">
+            <div class="form-group">
+                <label>开始日期</label>
+                <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>结束日期</label>
+                <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <button type="submit" class="btn">生成报表</button>
+        </div>
+    </form>
+</div>
+
+<!-- 销售概览 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">按商品分类的销售额</div>
+    <div class="card-body">
+        {% if category_sales %}
+        <table>
+            <thead>
+                <tr>
+                    <th>商品分类</th>
+                    <th>销售额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in category_sales %}
+                <tr>
+                    <td>{{ item.category }}</td>
+                    <td>{{ "%.2f"|format(item.total_sales) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>在所选时间范围内没有销售数据</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 月度销售额 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">月度销售额统计</div>
+    <div class="card-body">
+        {% if monthly_sales %}
+        <table>
+            <thead>
+                <tr>
+                    <th>年</th>
+                    <th>月</th>
+                    <th>销售额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in monthly_sales %}
+                <tr>
+                    <td>{{ item.year|int }}</td>
+                    <td>{{ item.month|int }}</td>
+                    <td>{{ "%.2f"|format(item.total_sales) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无月度销售数据</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 畅销商品排名 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">畅销商品排名</div>
+    <div class="card-body">
+        {% if top_products %}
+        <table>
+            <thead>
+                <tr>
+                    <th>商品名称</th>
+                    <th>商品分类</th>
+                    <th>销售数量</th>
+                    <th>销售额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_products %}
+                <tr>
+                    <td>{{ item.product }}</td>
+                    <td>{{ item.category }}</td>
+                    <td>{{ item.total_quantity }}</td>
+                    <td>{{ "%.2f"|format(item.total_sales) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>在所选时间范围内没有销售数据</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 客户购买力排名 -->
+<div class="card" style="margin-top: 1rem;">
+    <div class="card-header">客户购买力排名</div>
+    <div class="card-body">
+        {% if top_customers %}
+        <table>
+            <thead>
+                <tr>
+                    <th>客户名称</th>
+                    <th>订单数</th>
+                    <th>购买总额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_customers %}
+                <tr>
+                    <td>{{ item.customer }}</td>
+                    <td>{{ item.order_count }}</td>
+                    <td>{{ "%.2f"|format(item.total_amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>在所选时间范围内没有客户购买数据</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

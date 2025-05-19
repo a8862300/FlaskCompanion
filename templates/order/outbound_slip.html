@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出库单 - {{ order.order_number }}</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .slip-container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #000;
+            padding: 20px;
+        }
+        .slip-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
+        }
+        .slip-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .slip-subtitle {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .slip-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .slip-info-column {
+            flex: 1;
+        }
+        .slip-info-row {
+            margin-bottom: 5px;
+        }
+        .slip-info-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 80px;
+        }
+        .slip-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .slip-table th, .slip-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+        .slip-table th {
+            background-color: #f2f2f2;
+        }
+        .slip-total {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .slip-signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+        }
+        .slip-signature {
+            flex: 1;
+            padding: 0 20px;
+        }
+        .slip-signature-line {
+            border-bottom: 1px solid #000;
+            height: 40px;
+        }
+        .slip-signature-label {
+            text-align: center;
+            margin-top: 5px;
+        }
+        .slip-notes {
+            margin-top: 20px;
+            font-size: 14px;
+            font-style: italic;
+        }
+        .print-button {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .print-button button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        @media print {
+            .print-button {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-button">
+        <button onclick="window.print()">打印出库单</button>
+    </div>
+    
+    <div class="slip-container">
+        <div class="slip-header">
+            <div class="slip-title">商品出库单</div>
+            <div class="slip-subtitle">单号: {{ order.order_number }}</div>
+        </div>
+        
+        <div class="slip-info">
+            <div class="slip-info-column">
+                <div class="slip-info-row">
+                    <span class="slip-info-label">出库日期:</span>
+                    <span>{{ order.order_date.strftime('%Y-%m-%d') }}</span>
+                </div>
+                <div class="slip-info-row">
+                    <span class="slip-info-label">客户名称:</span>
+                    <span>{{ order.customer.name }}</span>
+                </div>
+                <div class="slip-info-row">
+                    <span class="slip-info-label">联系人:</span>
+                    <span>{{ order.customer.contact or '未设置' }}</span>
+                </div>
+                <div class="slip-info-row">
+                    <span class="slip-info-label">联系电话:</span>
+                    <span>{{ order.customer.phone or '未设置' }}</span>
+                </div>
+            </div>
+            
+            <div class="slip-info-column">
+                <div class="slip-info-row">
+                    <span class="slip-info-label">收货地址:</span>
+                    <span>{{ order.customer.address or '未设置' }}</span>
+                </div>
+                <div class="slip-info-row">
+                    <span class="slip-info-label">订单状态:</span>
+                    <span>{{ order.status }}</span>
+                </div>
+                <div class="slip-info-row">
+                    <span class="slip-info-label">支付方式:</span>
+                    <span>{{ order.payment_method }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <table class="slip-table">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>商品名称</th>
+                    <th>SKU</th>
+                    <th>数量</th>
+                    <th>单价</th>
+                    <th>金额</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.order_items %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.product.sku }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ "%.2f"|format(item.unit_price) }}</td>
+                    <td>{{ "%.2f"|format(item.subtotal) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="slip-total">
+            <div>合计数量: {{ order.order_items|sum(attribute='quantity') }} 件</div>
+            <div>合计金额: {{ "%.2f"|format(order.total_amount) }} 元</div>
+        </div>
+        
+        {% if order.notes %}
+        <div class="slip-notes">
+            <strong>备注:</strong> {{ order.notes }}
+        </div>
+        {% endif %}
+        
+        <div class="slip-signatures">
+            <div class="slip-signature">
+                <div class="slip-signature-line"></div>
+                <div class="slip-signature-label">仓库管理员</div>
+            </div>
+            <div class="slip-signature">
+                <div class="slip-signature-line"></div>
+                <div class="slip-signature-label">发货人</div>
+            </div>
+            <div class="slip-signature">
+                <div class="slip-signature-line"></div>
+                <div class="slip-signature-label">收货人</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

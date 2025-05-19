@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}登录 - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 0 auto;">
+    <h2>登录系统</h2>
+    
+    <form method="post">
+        {{ form.csrf_token }}
+        
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(class="form-control") }}
+            {% if form.username.errors %}
+            <div class="error-field">
+                {% for error in form.username.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control") }}
+            {% if form.password.errors %}
+            <div class="error-field">
+                {% for error in form.password.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.submit(class="btn") }}
+        </div>
+    </form>
+    
+    <div style="margin-top: 1rem;">
+        <p><small>默认管理员账户: 用户名 "admin", 密码 "admin"</small></p>
+    </div>
+</div>
+{% endblock %}

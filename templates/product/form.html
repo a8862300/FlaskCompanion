@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - 库存管理系统{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>{{ title }}</h2>
+    <a href="{{ url_for('product.list') }}" class="btn btn-secondary">返回列表</a>
+</div>
+
+<form method="post">
+    {{ form.csrf_token }}
+    
+    <div class="form-group">
+        {{ form.name.label }}
+        {{ form.name(class="form-control") }}
+        {% if form.name.errors %}
+        <div class="error-field">
+            {% for error in form.name.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.sku.label }}
+        {{ form.sku(class="form-control") }}
+        {% if form.sku.errors %}
+        <div class="error-field">
+            {% for error in form.sku.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.description.label }}
+        {{ form.description(class="form-control") }}
+        {% if form.description.errors %}
+        <div class="error-field">
+            {% for error in form.description.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-row" style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+            {{ form.selling_price.label }}
+            {{ form.selling_price(class="form-control") }}
+            {% if form.selling_price.errors %}
+            <div class="error-field">
+                {% for error in form.selling_price.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group" style="flex: 1;">
+            {{ form.cost_price.label }}
+            {{ form.cost_price(class="form-control") }}
+            {% if form.cost_price.errors %}
+            <div class="error-field">
+                {% for error in form.cost_price.errors %}
+                {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="form-group">
+        {{ form.stock_quantity.label }}
+        {{ form.stock_quantity(class="form-control") }}
+        {% if form.stock_quantity.errors %}
+        <div class="error-field">
+            {% for error in form.stock_quantity.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.category_id.label }}
+        {{ form.category_id(class="form-control") }}
+        {% if form.category_id.errors %}
+        <div class="error-field">
+            {% for error in form.category_id.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.supplier_id.label }}
+        {{ form.supplier_id(class="form-control") }}
+        {% if form.supplier_id.errors %}
+        <div class="error-field">
+            {% for error in form.supplier_id.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.submit(class="btn") }}
+    </div>
+</form>
+{% endblock %}
