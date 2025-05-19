@@ -6,7 +6,7 @@ import io
 from sqlalchemy import func, extract
 
 from app import db
-from models import Order, OrderItem, Product, Category, RawMaterialPurchase
+from models import Order, OrderItem, Product, Category, RawMaterialPurchase, Customer, RawMaterial, Supplier
 from forms import ReportDateRangeForm
 
 report_bp = Blueprint('report', __name__, url_prefix='/reports')

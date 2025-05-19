@@ -142,15 +142,18 @@ def adjust_stock(id):
     form.raw_material_id.render_kw = {'disabled': 'disabled'}
     
     if form.validate_on_submit():
-        adjustment = StockAdjustment(
-            adjustment_type='raw_material',
-            raw_material_id=raw_material.id,
-            quantity_before=raw_material.stock_quantity,
-            quantity_after=raw_material.stock_quantity + form.adjustment_quantity.data,
-            adjustment_quantity=form.adjustment_quantity.data,
-            reason=form.reason.data,
-            created_by=current_user.id
-        )
+        adjustment = StockAdjustment()
+        adjustment.adjustment_type = 'raw_material'
+        adjustment.raw_material_id = raw_material.id
+        adjustment.quantity_before = raw_material.stock_quantity
+        adjustment.quantity_after = raw_material.stock_quantity + form.adjustment_quantity.data
+        adjustment.adjustment_quantity = form.adjustment_quantity.data
+        # 合并下拉选择的原因和详细说明
+        reason_text = form.reason.data
+        if form.reason_detail.data:
+            reason_text += f": {form.reason_detail.data}"
+        adjustment.reason = reason_text
+        adjustment.created_by = current_user.id
         
         # 更新原材料库存
         raw_material.stock_quantity += form.adjustment_quantity.data

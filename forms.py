@@ -104,7 +104,15 @@ class StockAdjustmentForm(FlaskForm):
     product_id = SelectField('商品', coerce=int)
     raw_material_id = SelectField('原材料', coerce=int)
     adjustment_quantity = FloatField('调整数量', validators=[DataRequired(message='调整数量不能为空')])
-    reason = TextAreaField('调整原因', validators=[DataRequired(message='调整原因不能为空')])
+    reason = SelectField('调整原因', choices=[
+        ('盘点调整', '盘点调整'),
+        ('退货入库', '退货入库'),
+        ('质量问题出库', '质量问题出库'),
+        ('生产领用', '生产领用'),
+        ('损耗报废', '损耗报废'),
+        ('其他原因', '其他原因')
+    ], validators=[DataRequired(message='调整原因不能为空')])
+    reason_detail = TextAreaField('详细说明', validators=[Optional()])
     submit = SubmitField('保存')
 
 class ReportDateRangeForm(FlaskForm):

@@ -178,15 +178,18 @@ def adjust_stock(id):
     form.process()  # 重新处理表单以应用默认值
     
     if form.validate_on_submit():
-        adjustment = StockAdjustment(
-            adjustment_type='product',
-            product_id=product.id,
-            quantity_before=product.stock_quantity,
-            quantity_after=product.stock_quantity + form.adjustment_quantity.data,
-            adjustment_quantity=form.adjustment_quantity.data,
-            reason=form.reason.data,
-            created_by=current_user.id
-        )
+        adjustment = StockAdjustment()
+        adjustment.adjustment_type = 'product'
+        adjustment.product_id = product.id
+        adjustment.quantity_before = product.stock_quantity
+        adjustment.quantity_after = product.stock_quantity + form.adjustment_quantity.data
+        adjustment.adjustment_quantity = form.adjustment_quantity.data
+        # 合并下拉选择的原因和详细说明
+        reason_text = form.reason.data
+        if form.reason_detail.data:
+            reason_text += f": {form.reason_detail.data}"
+        adjustment.reason = reason_text
+        adjustment.created_by = current_user.id
         
         # 更新商品库存
         product.stock_quantity += form.adjustment_quantity.data
