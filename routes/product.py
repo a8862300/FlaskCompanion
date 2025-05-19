@@ -174,6 +174,8 @@ def adjust_stock(id):
     
     # 隐藏原材料选择
     form.raw_material_id.render_kw = {'style': 'display: none;'}
+    form.raw_material_id.choices = [(-1, '无')]  # 提供一个空选项避免验证错误
+    form.process()  # 重新处理表单以应用默认值
     
     if form.validate_on_submit():
         adjustment = StockAdjustment(

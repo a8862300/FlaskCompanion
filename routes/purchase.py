@@ -82,43 +82,47 @@ def add():
         # 获取原材料对象以便更新库存
         raw_material = RawMaterial.query.get(form.raw_material_id.data)
         
-        # 计算采购总价
-        total_price = form.quantity.data * form.unit_price.data
+        if raw_material:
+            # 计算采购总价
+            total_price = form.quantity.data * form.unit_price.data
+            
+            # 创建采购记录
+            purchase = RawMaterialPurchase()
+            purchase.purchase_date = form.purchase_date.data
+            purchase.raw_material_id = form.raw_material_id.data
+            purchase.supplier_id = form.supplier_id.data
+            purchase.quantity = form.quantity.data
+            purchase.unit_price = form.unit_price.data
+            purchase.total_price = total_price
+            
+            # 更新原材料库存和单位成本
+            old_stock = raw_material.stock_quantity
+            raw_material.stock_quantity += form.quantity.data
+            
+            # 创建库存调整记录
+            adjustment = StockAdjustment()
+            adjustment.adjustment_type = 'raw_material'
+            adjustment.raw_material_id = raw_material.id
+            adjustment.quantity_before = old_stock
+            adjustment.quantity_after = raw_material.stock_quantity
+            adjustment.adjustment_quantity = form.quantity.data
+            adjustment.reason = f'采购入库：{form.quantity.data} {raw_material.unit}'
+            adjustment.created_by = current_user.id
+            
+            # 如果单位成本不同，计算新的平均单位成本
+            if raw_material.unit_cost != form.unit_price.data:
+                # 计算加权平均成本
+                total_value = (old_stock * raw_material.unit_cost) + (form.quantity.data * form.unit_price.data)
+                raw_material.unit_cost = total_value / raw_material.stock_quantity
         
-        # 创建采购记录
-        purchase = RawMaterialPurchase(
-            purchase_date=form.purchase_date.data,
-            raw_material_id=form.raw_material_id.data,
-            supplier_id=form.supplier_id.data,
-            quantity=form.quantity.data,
-            unit_price=form.unit_price.data,
-            total_price=total_price
-        )
-        
-        # 更新原材料库存和单位成本
-        old_stock = raw_material.stock_quantity
-        raw_material.stock_quantity += form.quantity.data
-        
-        # 创建库存调整记录
-        adjustment = StockAdjustment(
-            adjustment_type='raw_material',
-            raw_material_id=raw_material.id,
-            quantity_before=old_stock,
-            quantity_after=raw_material.stock_quantity,
-            adjustment_quantity=form.quantity.data,
-            reason=f'采购入库：{form.quantity.data} {raw_material.unit}',
-            created_by=current_user.id
-        )
-        
-        # 如果单位成本不同，计算新的平均单位成本
-        if raw_material.unit_cost != form.unit_price.data:
-            # 计算加权平均成本
-            total_value = (old_stock * raw_material.unit_cost) + (form.quantity.data * form.unit_price.data)
-            raw_material.unit_cost = total_value / raw_material.stock_quantity
-        
-        db.session.add(purchase)
-        db.session.add(adjustment)
-        db.session.commit()
+        if raw_material:
+            db.session.add(purchase)
+            db.session.add(adjustment)
+            db.session.commit()
+            flash('原材料采购记录添加成功', 'success')
+            return redirect(url_for('purchase.list'))
+        else:
+            flash('无法找到指定的原材料', 'danger')
         
         flash('原材料采购记录添加成功', 'success')
         return redirect(url_for('purchase.list'))

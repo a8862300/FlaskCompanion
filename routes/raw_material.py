@@ -133,10 +133,12 @@ def adjust_stock(id):
     
     # 隐藏商品选择
     form.product_id.render_kw = {'style': 'display: none;'}
+    form.product_id.choices = [(-1, '无')]  # 提供一个空选项避免验证错误
     
     # 预设原材料
     form.raw_material_id.choices = [(raw_material.id, raw_material.name)]
     form.raw_material_id.default = raw_material.id
+    form.process()  # 重新处理表单以应用默认值
     form.raw_material_id.render_kw = {'disabled': 'disabled'}
     
     if form.validate_on_submit():
