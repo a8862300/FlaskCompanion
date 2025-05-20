@@ -5,106 +5,219 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>出库单 - {{ order.order_number }}</title>
     <style>
+        /* --- 通用基础样式 --- */
         body {
             font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0; /* 基础padding设为0，由内部容器控制 */
             color: #333;
+            line-height: 1.5; /* 默认行高 */
         }
-        .slip-container {
+
+        /* --- 屏幕显示时的样式和结构 (原始布局) --- */
+        .screen-only {
+            display: block; /* 屏幕上显示 */
+        }
+
+        .slip-container-screen {
             max-width: 800px;
-            margin: 0 auto;
-            border: 1px solid #000;
+            margin: 20px auto;
+            border: 1px solid #ccc;
             padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+         /* 沿用你原有的屏幕样式类名 */
+        .slip-header, .slip-info, .slip-table, .slip-total, .slip-signatures {
+             /* 确保原有的flex或block等布局样式在这里 */
         }
         .slip-header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #000;
+            text-align: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #000;
         }
-        .slip-title {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .slip-subtitle {
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        .slip-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .slip-info-column {
-            flex: 1;
-        }
-        .slip-info-row {
-            margin-bottom: 5px;
-        }
-        .slip-info-label {
-            font-weight: bold;
-            display: inline-block;
-            width: 80px;
-        }
-        .slip-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .slip-table th, .slip-table td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: center;
-        }
-        .slip-table th {
-            background-color: #f2f2f2;
-        }
-        .slip-total {
-            text-align: right;
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 20px;
-        }
-        .slip-signatures {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-        }
-        .slip-signature {
-            flex: 1;
-            padding: 0 20px;
-        }
-        .slip-signature-line {
-            border-bottom: 1px solid #000;
-            height: 40px;
-        }
-        .slip-signature-label {
-            text-align: center;
-            margin-top: 5px;
-        }
-        .slip-notes {
-            margin-top: 20px;
-            font-size: 14px;
-            font-style: italic;
-        }
+        .slip-title { font-size: 24px; font-weight: bold;}
+        .slip-subtitle { font-size: 14px; margin-top: 5px;}
+        .slip-info { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .slip-info-column { flex: 1; }
+        .slip-info-row { margin-bottom: 5px; }
+        .slip-info-label { font-weight: bold; display: inline-block; width: 80px;}
+        .slip-table { width: 100%; border-collapse: collapse; margin-bottom: 20px;}
+        .slip-table th, .slip-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        .slip-table th { background-color: #f2f2f2; }
+         .slip-total { text-align: right; font-weight: bold; margin-top: 10px; margin-bottom: 20px;}
+         .slip-signatures { display: flex; justify-content: space-between; margin-top: 50px; }
+         .slip-signature { flex: 1; padding: 0 20px; text-align: center; }
+         .slip-signature-line { border-bottom: 1px solid #000; height: 40px; margin-bottom: 5px;}
+         .slip-signature-label { text-align: center; margin-top: 5px;}
+
+
         .print-button {
+            display: block; /* 屏幕上显示打印按钮 */
             text-align: center;
             margin-top: 20px;
-            margin-bottom: 20px;
         }
-        .print-button button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
+
+
+        /* --- 打印时使用的样式和结构 (新布局) --- */
+        .print-only {
+            display: none; /* 默认不显示，只在打印时显示 */
         }
+
         @media print {
-            .print-button {
-                display: none;
+            /* 隐藏屏幕特有的元素 */
+            .screen-only {
+                display: none !important;
             }
+            /* 显示打印特有的元素 */
+            .print-only {
+                display: block !important; /* 或者 flex/grid 根据其内部布局方式决定 */
+            }
+            /* 隐藏打印按钮 */
+             .print-button {
+                 display: none !important;
+             }
+
+
+            /* 尝试去除浏览器默认打印边距 */
+            @page {
+                margin: 0 !important;
+            }
+
             body {
-                padding: 0;
+                /* 应用纸张边距 */
+                margin: 1.2mm !important; /* 四周边距 1.2mm */
+                padding: 0 !important; /* 确保 body 没有内边距 */
+                background-color: white !important;
+                color: #000 !important;
+                line-height: 1.2 !important; /* 紧凑行高，接近单字符高度 */
+                word-break: break-word; /* 允许长单词或URL换行 */
             }
+
+            /* 主要内容容器，填充 body 提供的空间，并设置整体尺寸 */
+            .slip-container-print {
+                 width: calc(21.7cm - 2 * 1.2mm) !important; /* 容器宽度 */
+                 height: calc(9.65cm - 2 * 1.2mm) !important; /* 容器高度 */
+                 margin: 0 !important;
+                 padding: 0 !important;
+                 border: none !important;
+                 box-shadow: none !important;
+                 box-sizing: border-box !important;
+                 display: flex;
+                 flex-direction: column;
+                 justify-content: space-between; /* 推底部签字到底部 */
+                 overflow: hidden; /* 如果内容超出高度，隐藏溢出部分 */
+                 position: relative; /* 方便内部元素定位 */
+            }
+
+            /* 头部区域 */
+            .slip-header-print {
+                width: 100%;
+                text-align: center; /* 主标题居中 */
+                padding-bottom: 2mm !important;
+                border-bottom: 1px solid #000 !important;
+                margin-bottom: 2mm !important;
+                flex-shrink: 0;
+                font-size: 12px !important; /* 调整字号 */
+            }
+             .slip-title-print {
+                font-size: 16px !important;
+                font-weight: bold !important;
+                margin-bottom: 2mm !important;
+             }
+             .slip-date-no-print {
+                 display: flex;
+                 justify-content: space-between;
+                 font-size: 12px !important;
+             }
+             .slip-date-no-print span { flex: 1; }
+             .slip-date-no-print .no { text-align: right; }
+
+
+            /* 商品表格区域 */
+            .slip-table-print {
+                width: 100% !important;
+                border-collapse: collapse;
+                margin-bottom: 2mm !important;
+                 flex-grow: 1; /* 占据剩余垂直空间 */
+                font-size: 12px !important;
+                table-layout: fixed; /* 固定表格布局，列宽更稳定 */
+            }
+            .slip-table-print th, .slip-table-print td {
+                 border: 1px solid #000 !important;
+                 padding: 1mm 2mm !important;
+                 text-align: center;
+                 word-break: break-word;
+                 line-height: 1.2 !important; /* 表格单元格紧凑行高 */
+            }
+             .slip-table-print th { background-color: #f2f2f2 !important; }
+
+            /* 调整表格列宽以模仿图片并容纳现有数据 */
+             .slip-table-print th:nth-child(1), /* 编号 */
+             .slip-table-print td:nth-child(1) { width: 8% !important; }
+             .slip-table-print th:nth-child(2), /* 物品名称 */
+             .slip-table-print td:nth-child(2) { width: 35% !important; text-align: left !important; } /* 留足空间，左对齐 */
+             .slip-table-print th:nth-child(3), /* SKU */
+             .slip-table-print td:nth-child(3) { width: 15% !important; } /* 示例宽度 */
+             .slip-table-print th:nth-child(4), /* 数量 */
+             .slip-table-print td:nth-child(4) { width: 10% !important; }
+             .slip-table-print th:nth-child(5), /* 单价 */
+             .slip-table-print td:nth-child(5) { width: 12% !important; } /* 示例宽度 */
+             .slip-table-print th:nth-child(6), /* 金额 */
+             .slip-table-print td:nth-child(6) { width: 20% !important; } /* 示例宽度 */
+
+
+             /* 确保表格内容不会在单元格或行内部断页 */
+              .slip-table-print tr, .slip-table-print td {
+                   page-break-inside: avoid !important;
+               }
+             .slip-table-print thead { page-break-after: avoid !important; }
+
+
+            /* 合计区域 */
+            .slip-total-print {
+                 width: 100% !important;
+                 text-align: right !important;
+                 font-weight: bold !important;
+                 margin-top: 2mm !important;
+                 margin-bottom: 5mm !important;
+                 font-size: 12px !important;
+                 flex-shrink: 0;
+                 line-height: 1.2 !important; /* 紧凑行高 */
+            }
+
+
+            /* 底部签字区域 - 只保留收货人 */
+            .slip-signatures-print {
+                 width: 100% !important;
+                 display: flex;
+                 justify-content: flex-end; /* 推到最右边 */
+                 margin-top: 10mm !important;
+                  flex-shrink: 0;
+                  font-size: 12px !important;
+                  line-height: 1.2 !important; /* 紧凑行高 */
+            }
+             /* 收货人签名位 */
+             .slip-signature-item-print {
+                   width: 25% !important; /* 固定宽度 */
+                   text-align: center !important;
+                   margin-left: auto !important; /* 推到最右边 */
+                   padding: 0 !important;
+             }
+            .slip-signature-line-print {
+                 border-bottom: 1px solid #000 !important;
+                 height: 10mm !important; /* 签名线高度 */
+                 margin-bottom: 2mm !important;
+            }
+            .slip-signature-label-print {
+                 font-size: 12px !important;
+                 margin-top: 0 !important;
+            }
+
+            /* 确保主要的块不会在不合适的地方断页 */
+            .slip-header-print, .slip-table-print, .slip-total-print, .slip-signatures-print {
+                page-break-inside: avoid !important;
+            }
+             /* 如果一个页面只打印一张单 */
+             /* .slip-container-print { page-break-after: always !important; } */
         }
     </style>
 </head>
@@ -112,99 +225,162 @@
     <div class="print-button">
         <button onclick="window.print()">打印出库单</button>
     </div>
-    
-    <div class="slip-container">
-        <div class="slip-header">
-            <div class="slip-title">商品出库单</div>
-            <div class="slip-subtitle">单号: {{ order.order_number }}</div>
-        </div>
-        
-        <div class="slip-info">
-            <div class="slip-info-column">
-                <div class="slip-info-row">
-                    <span class="slip-info-label">出库日期:</span>
-                    <span>{{ order.order_date.strftime('%Y-%m-%d') }}</span>
-                </div>
-                <div class="slip-info-row">
-                    <span class="slip-info-label">客户名称:</span>
-                    <span>{{ order.customer.name }}</span>
-                </div>
-                <div class="slip-info-row">
-                    <span class="slip-info-label">联系人:</span>
-                    <span>{{ order.customer.contact or '未设置' }}</span>
-                </div>
-                <div class="slip-info-row">
-                    <span class="slip-info-label">联系电话:</span>
-                    <span>{{ order.customer.phone or '未设置' }}</span>
-                </div>
+
+    <div class="screen-only">
+        <div class="slip-container-screen">
+            <div class="slip-header-screen">
+                 <div class="slip-title-screen">商品出库单</div>
+                 <div class="slip-info-line-screen">
+                     <span>出库日期: {{ order.order_date.strftime('%Y-%m-%d') }}</span>
+                      <span>单号: {{ order.order_number }}</span>
+                 </div>
+                 {# 这里可以根据需要添加其他屏幕上的头部信息 #}
             </div>
-            
-            <div class="slip-info-column">
-                <div class="slip-info-row">
-                    <span class="slip-info-label">收货地址:</span>
-                    <span>{{ order.customer.address or '未设置' }}</span>
+
+            {# 沿用你原有的客户/订单信息块的HTML结构 #}
+            <div class="slip-info">
+                 {#...你原有的客户/订单信息的HTML代码...#}
+                 <div class="slip-info-column">
+                    <div class="slip-info-row">
+                        <span class="slip-info-label">出库日期:</span>
+                        <span>{{ order.order_date.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                    <div class="slip-info-row">
+                        <span class="slip-info-label">客户名称:</span>
+                        <span>{{ order.customer.name }}</span>
+                    </div>
+                    <div class="slip-info-row">
+                        <span class="slip-info-label">联系人:</span>
+                        <span>{{ order.customer.contact or '未设置' }}</span>
+                    </div>
+                    <div class="slip-info-row">
+                        <span class="slip-info-label">联系电话:</span>
+                        <span>{{ order.customer.phone or '未设置' }}</span>
+                    </div>
                 </div>
-                <div class="slip-info-row">
-                    <span class="slip-info-label">订单状态:</span>
-                    <span>{{ order.status }}</span>
+                <div class="slip-info-column">
+                    <div class="slip-info-row">
+                        <span class="slip-info-label">收货地址:</span>
+                        <span>{{ order.customer.address or '未设置' }}</span>
+                    </div>
+                    <div class="slip-info-row">
+                        <span class="slip-info-label">订单状态:</span>
+                        <span>{{ order.status }}</span>
+                    </div>
+                    <div class="slip-info-row">
+                        <span class="slip-info-label">支付方式:</span>
+                        <span>{{ order.payment_method }}</span>
+                    </div>
                 </div>
-                <div class="slip-info-row">
-                    <span class="slip-info-label">支付方式:</span>
-                    <span>{{ order.payment_method }}</span>
-                </div>
+                {#...原有的信息HTML结束...#}
             </div>
-        </div>
-        
-        <table class="slip-table">
-            <thead>
-                <tr>
-                    <th>序号</th>
-                    <th>商品名称</th>
-                    <th>SKU</th>
-                    <th>数量</th>
-                    <th>单价</th>
-                    <th>金额</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in order.order_items %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ item.product.name }}</td>
-                    <td>{{ item.product.sku }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ "%.2f"|format(item.unit_price) }}</td>
-                    <td>{{ "%.2f"|format(item.subtotal) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <div class="slip-total">
-            <div>合计数量: {{ order.order_items|sum(attribute='quantity') }} 件</div>
-            <div>合计金额: {{ "%.2f"|format(order.total_amount) }} 元</div>
-        </div>
-        
-        {% if order.notes %}
-        <div class="slip-notes">
-            <strong>备注:</strong> {{ order.notes }}
-        </div>
-        {% endif %}
-        
-        <div class="slip-signatures">
-            <div class="slip-signature">
-                <div class="slip-signature-line"></div>
-                <div class="slip-signature-label">仓库管理员</div>
+
+            {# 沿用你原有的商品表格HTML结构 #}
+            <table class="slip-table-screen">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>商品名称</th>
+                        <th>SKU</th>
+                        <th>数量</th>
+                        <th>单价</th>
+                        <th>金额</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.order_items %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.product.sku }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ "%.2f"|format(item.unit_price) }}</td>
+                        <td>{{ "%.2f"|format(item.subtotal) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {# 沿用你原有的合计部分HTML结构 #}
+             <div class="slip-total">
+                <div>合计数量: {{ order.order_items|sum(attribute='quantity') }} 件</div>
+                <div>合计金额: {{ "%.2f"|format(order.total_amount) }} 元</div>
             </div>
-            <div class="slip-signature">
-                <div class="slip-signature-line"></div>
-                <div class="slip-signature-label">发货人</div>
-            </div>
-            <div class="slip-signature">
-                <div class="slip-signature-line"></div>
-                <div class="slip-signature-label">收货人</div>
-            </div>
+
+             {# 沿用你原有的备注部分HTML结构 #}
+             {% if order.notes %}
+             <div class="slip-notes">
+                 <strong>备注:</strong> {{ order.notes }}
+             </div>
+             {% endif %}
+
+            {# 沿用你原有的签名部分HTML结构 #}
+             <div class="slip-signatures">
+                 <div class="slip-signature"> <div class="slip-signature-line"></div> <div class="slip-signature-label">仓库管理员</div> </div>
+                 <div class="slip-signature"> <div class="slip-signature-line"></div> <div class="slip-signature-label">发货人</div> </div>
+                 <div class="slip-signature"> <div class="slip-signature-line"></div> <div class="slip-signature-label">收货人</div> </div>
+             </div>
+
         </div>
     </div>
+
+
+    <div class="print-only">
+         <div class="slip-container-print">
+             <div class="slip-header-print">
+                 <div class="slip-title-print">出 库 单</div>
+                 <div class="slip-date-no-print">
+                     <span>日期: {{ order.order_date.strftime('%Y-%m-%d') }}</span>
+                     <span class="no">NO: {{ order.order_number }}</span>
+                 </div>
+             </div>
+
+             <table class="slip-table-print">
+                 <thead>
+                     <tr>
+                         <th>编号</th>
+                         <th>物品名称</th>
+                         <th>SKU</th>
+                         <th>数量</th>
+                         <th>单价</th>
+                         <th>金额</th>
+                     </tr>
+                 </thead>
+                 <tbody>
+                     {% for item in order.order_items %}
+                     <tr>
+                         <td>{{ loop.index }}</td> {# 对应编号 #}
+                         <td>{{ item.product.name }}</td> {# 对应物品名称 #}
+                         <td>{{ item.product.sku }}</td> {# 对应 SKU #}
+                         <td>{{ item.quantity }}</td> {# 对应数量 #}
+                         <td>{{ "%.2f"|format(item.unit_price) }}</td> {# 对应单价 #}
+                         <td>{{ "%.2f"|format(item.subtotal) }}</td> {# 对应金额 #}
+                     </tr>
+                     {% endfor %}
+                 </tbody>
+             </table>
+
+             <div class="slip-total-print">
+                 {# 模仿图片格式，只显示总金额 #}
+                  合计: ¥{{ "%.2f"|format(order.total_amount) }}
+             </div>
+
+             <div class="slip-signatures-print">
+                  {# 只包含收货人签名位 #}
+                 <div class="slip-signature-item-print">
+                     <div class="slip-signature-line-print"></div>
+                     <div class="slip-signature-label-print">收货人</div>
+                 </div>
+                 {# 其他签名位（仓库管理员，发货人）不在此处包含 #}
+             </div>
+
+             {# 备注部分如果需要在打印时包含，需要决定放哪里并调整布局 #}
+             {# 暂时不包含备注，如果需要，再告诉我 #}
+             {% if order.notes %}
+             {% endif %}
+
+         </div>
+    </div>
+
 </body>
 </html>

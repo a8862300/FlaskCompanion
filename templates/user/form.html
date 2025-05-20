@@ -1,0 +1,61 @@
+{% extends 'base.html' %} {# 继承基础布局模板 #}
+
+{% block title %}{{ title }}{% endblock %} {# 设置页面标题，title 由后端传递 #}
+
+{% block content %} {# 在基础模板的 content 块中填充内容 #}
+    <h2>{{ title }}</h2> {# 显示页面标题，如“添加用户”或“编辑用户” #}
+
+    {# HTML 表单，使用 POST 方法提交数据 #}
+    {# action 属性通常会在后端 WTForms 的 setup 中或通过 url_for 动态生成，这里简化 #}
+    <form method="POST">
+        {{ form.csrf_token }} {# WTForms 生成的 CSRF 保护字段，必须包含 #}
+
+        {# 渲染用户名输入框 #}
+        <div>
+            {{ form.username.label }}<br> {# 显示用户名字段的标签 #}
+            {{ form.username() }} {# 渲染用户名字段的输入框 #}
+            {# 显示用户名字段的验证错误信息 #}
+            {% for error in form.username.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+
+        {# 渲染密码输入框 #}
+        <div>
+            {{ form.password.label }}<br>
+            {{ form.password() }}
+            {% for error in form.password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+
+        {# 假设你的用户表单还有确认密码和角色字段，这里是可选的渲染 #}
+        {# 如果 form 对象中有这些字段，就会渲染出来 #}
+        {% if form.confirm_password %}
+        <div>
+            {{ form.confirm_password.label }}<br>
+            {{ form.confirm_password() }}
+            {% for error in form.confirm_password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.role %}
+        <div>
+            {{ form.role.label }}<br>
+            {{ form.role() }} {# 这可能是个下拉选择框 #}
+            {% for error in form.role.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# 提交按钮 #}
+        <button type="submit">保存用户</button>
+
+        {# 返回用户列表的链接 #}
+        <a href="{{ url_for('auth.user_list') }}">取消</a>
+    </form>
+
+{% endblock %}
