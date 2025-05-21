@@ -100,9 +100,12 @@ class OrderItemForm(FlaskForm):
 
 class StockAdjustmentForm(FlaskForm):
     """库存调整表单"""
-    adjustment_type = SelectField('调整类型', choices=[('product', '成品商品'), ('raw_material', '原材料')])
-    product_id = SelectField('商品', coerce=int)
-    raw_material_id = SelectField('原材料', coerce=int)
+    # 保持为 SelectField，以便在路由中设置 choices
+    adjustment_type = SelectField('调整类型', choices=[('product', '成品商品'), ('raw_material', '原材料')], validators=[DataRequired(message='调整类型不能为空')])
+    # product_id 保持 SelectField，并设置为 DataRequired
+    product_id = SelectField('商品', coerce=int, validators=[DataRequired(message='商品ID不能为空')])
+    raw_material_id = SelectField('原材料', coerce=int, validators=[Optional()]) # 保持 SelectField，但允许可选
+    
     adjustment_quantity = FloatField('调整数量', validators=[DataRequired(message='调整数量不能为空')])
     reason = SelectField('调整原因', choices=[
         ('盘点调整', '盘点调整'),
@@ -120,3 +123,16 @@ class ReportDateRangeForm(FlaskForm):
     start_date = DateField('开始日期', default=lambda: datetime.now().replace(day=1))
     end_date = DateField('结束日期', default=datetime.now)
     submit = SubmitField('生成报表')
+    # 额外的隐藏字段用于存储其他信息
+    report_type = HiddenField('报表类型')
+    report_format = HiddenField('报表格式')
+    include_details = BooleanField('包含详细信息', default=False)
+    include_summary = BooleanField('包含汇总信息', default=True)
+    include_charts = BooleanField('包含图表', default=False)
+    include_notes = BooleanField('包含备注', default=False)
+    include_attachments = BooleanField('包含附件', default=False)
+    include_comments = BooleanField('包含评论', default=False)
+    include_signatures = BooleanField('包含签名', default=False)
+    include_approval = BooleanField('包含审批', default=False)
+    include_history = BooleanField('包含历史记录', default=False)
+    include_references = BooleanField('包含参考资料', default=False) 
