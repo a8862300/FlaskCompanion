@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
+from app import app # 导入 app 实例，以便使用 app.logger
 
 from app import db
-from models import Product, Category, Supplier, StockAdjustment
-from forms import ProductForm, StockAdjustmentForm
+from models import Product, Category, Supplier, StockAdjustment, RawMaterial # 导入 RawMaterial
+from forms import ProductForm, StockAdjustmentForm # 确保 StockAdjustmentForm 导入正确
 
 product_bp = Blueprint('product', __name__, url_prefix='/products')
 
@@ -163,28 +164,43 @@ def adjust_stock(id):
     product = Product.query.get_or_404(id)
     form = StockAdjustmentForm()
     
-    # 预设调整类型为商品
-    form.adjustment_type.data = 'product'
-    form.adjustment_type.render_kw = {'disabled': 'disabled'}
+    # 设置 SelectField 的 choices 和 default 值
+    # adjustment_type 总是 'product'
+    form.adjustment_type.choices = [('product', '成品商品')]
+    form.adjustment_type.default = 'product'
     
-    # 预设商品
+    # product_id 总是当前商品的 ID
     form.product_id.choices = [(product.id, product.name)]
     form.product_id.default = product.id
-    form.product_id.render_kw = {'disabled': 'disabled'}
     
-    # 隐藏原材料选择
-    form.raw_material_id.render_kw = {'style': 'display: none;'}
-    form.raw_material_id.choices = [(-1, '无')]  # 提供一个空选项避免验证错误
-    form.process()  # 重新处理表单以应用默认值
+    # raw_material_id 选项（如果需要，可以从数据库加载）
+    # 由于是调整商品库存，raw_material_id 通常不需要用户选择，可以隐藏并设置默认值
+    form.raw_material_id.choices = [(0, 'N/A')] + [(rm.id, rm.name) for rm in RawMaterial.query.order_by('name').all()]
+    form.raw_material_id.default = 0 # 设置一个默认值，例如 0 或 None
+    form.raw_material_id.render_kw = {'style': 'display: none;'} # 隐藏字段
+
+    # 调用 process() 方法来应用默认值和处理请求数据
+    # 注意：如果 form.data 已经被手动设置，process() 可能会覆盖它，
+    # 但对于 SelectField 的 default 属性，process() 应该能正确处理
+    # 移除 form.process()，因为它可能干扰手动设置的 default 值
+    # form.process() 
     
+    # --- 新增调试日志：打印浏览器发送的表单数据 ---
+    if request.method == 'POST':
+        app.logger.debug(f"DEBUG: Form data received from browser (POST): {request.form}") # 使用 request.form 获取数据
+        app.logger.debug(f"DEBUG: CSRF token from browser (POST): {request.form.get('csrf_token')}") # 直接从 request.form 获取 csrf_token
+    # --- 调试日志结束 ---
+
     if form.validate_on_submit():
         adjustment = StockAdjustment()
-        adjustment.adjustment_type = 'product'
-        adjustment.product_id = product.id
+        adjustment.adjustment_type = form.adjustment_type.data # 从表单数据获取
+        adjustment.product_id = form.product_id.data # 从表单数据获取
+        adjustment.raw_material_id = form.raw_material_id.data if form.raw_material_id.data > 0 else None # 根据业务逻辑处理
+        
         adjustment.quantity_before = product.stock_quantity
         adjustment.quantity_after = product.stock_quantity + form.adjustment_quantity.data
         adjustment.adjustment_quantity = form.adjustment_quantity.data
-        # 合并下拉选择的原因和详细说明
+        
         reason_text = form.reason.data
         if form.reason_detail.data:
             reason_text += f": {form.reason_detail.data}"
@@ -199,6 +215,11 @@ def adjust_stock(id):
         
         flash(f'库存调整成功：{product.name} 当前库存 {product.stock_quantity}', 'success')
         return redirect(url_for('product.detail', id=product.id))
+    else:
+        # 如果验证失败，打印表单错误，这对于调试非常有用
+        app.logger.debug(f"DEBUG: Form validation failed. Errors: {form.errors}")
+        if 'csrf_token' in form.errors:
+            app.logger.debug(f"DEBUG: CSRF token specific errors: {form.errors['csrf_token']}")
     
     return render_template(
         'product/adjust.html', 

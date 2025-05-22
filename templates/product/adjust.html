@@ -29,9 +29,11 @@
 <form method="post">
     {{ form.csrf_token }}
     
+    {# 确保 adjustment_type 和 product_id 字段被正确渲染为隐藏字段 #}
+    {# 它们在 forms.py 中仍然是 SelectField，但在这里通过 style 隐藏 #}
     {{ form.adjustment_type(style="display: none;") }}
     {{ form.product_id(style="display: none;") }}
-    {{ form.raw_material_id(style="display: none;") }}
+    {{ form.raw_material_id(style="display: none;") }} {# raw_material_id 保持隐藏 #}
     
     <div class="form-group">
         {{ form.adjustment_quantity.label }}
@@ -52,6 +54,19 @@
         {% if form.reason.errors %}
         <div class="error-field">
             {% for error in form.reason.errors %}
+            {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# 如果有 reason_detail 字段，也应该渲染出来 #}
+    <div class="form-group">
+        {{ form.reason_detail.label }}
+        {{ form.reason_detail(class="form-control", placeholder="请输入详细说明 (可选)") }}
+        {% if form.reason_detail.errors %}
+        <div class="error-field">
+            {% for error in form.reason_detail.errors %}
             {{ error }}
             {% endfor %}
         </div>
