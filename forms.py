@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, FloatField, IntegerField, SelectField, DateField, HiddenField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange
+from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange # 导入 Optional
 from datetime import datetime
 
 class LoginForm(FlaskForm):
@@ -41,7 +41,8 @@ class CategoryForm(FlaskForm):
 class ProductForm(FlaskForm):
     """商品表单"""
     name = StringField('商品名称', validators=[DataRequired(message='商品名称不能为空')])
-    sku = StringField('SKU', validators=[DataRequired(message='SKU不能为空')])
+    # SKU 字段现在是可选的，以便后端可以自动生成
+    sku = StringField('SKU', validators=[Optional()]) # <--- 关键修改：DataRequired 变为 Optional()
     description = TextAreaField('描述')
     selling_price = FloatField('销售价格', validators=[DataRequired(message='销售价格不能为空'), NumberRange(min=0, message='价格必须大于等于0')])
     cost_price = FloatField('成本价格', validators=[DataRequired(message='成本价格不能为空'), NumberRange(min=0, message='价格必须大于等于0')])

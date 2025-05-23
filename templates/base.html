@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}库存管理系统{% endblock %}</title>
+    {# 结合了您的 {% block title %} 和我的动态标题逻辑 #}
+    <title>{% block title %}{% if title %}{{ title }} - {% endif %}库存管理系统{% endblock %}</title>
     <style>
         body {
             font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
@@ -264,6 +265,7 @@
             min-width: 100px;
         }
     </style>
+    {# 您原有的 head block #}
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -318,6 +320,7 @@
         <div>库存管理系统 &copy; {{ g.year }}</div>
     </footer>
     
+    {# 您原有的 scripts block #}
     {% block scripts %}{% endblock %}
 </body>
 </html>

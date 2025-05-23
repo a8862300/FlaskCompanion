@@ -1,10 +1,19 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app import app # 导入 app 实例，以便使用 app.logger
-
+from app import app # 引入 app 实例，因为我们需要 logger
 from app import db
-from models import Product, Category, Supplier, StockAdjustment, RawMaterial # 导入 RawMaterial
+# 确保导入了 RawMaterial，因为 StockAdjustmentForm 中会用到
+from models import Product, Category, Supplier, StockAdjustment, RawMaterial 
+
+# 引入 pypinyin 库和 time
+from pypinyin import Style, pinyin
+import time
+
+# 引入 IntegrityError
+from sqlalchemy.exc import IntegrityError
+
 from forms import ProductForm, StockAdjustmentForm # 确保 StockAdjustmentForm 导入正确
+
 
 product_bp = Blueprint('product', __name__, url_prefix='/products')
 
@@ -76,9 +85,25 @@ def add():
     if form.validate_on_submit():
         supplier_id = form.supplier_id.data if form.supplier_id.data > 0 else None
         
+        # --- SKU 自动生成逻辑开始 ---
+        sku = form.sku.data # 获取表单中输入的 SKU
+        
+        if not sku: # 如果用户没有输入 SKU (即表单 SKU 字段为空)
+            product_name = form.name.data
+            # 将产品名称转换为拼音首字母，并转为大写
+            pinyin_initials = ''.join([i[0][0].upper() for i in pinyin(product_name, style=Style.NORMAL)])
+            
+            # 为了确保 SKU 唯一性，可以在后面添加一个简短的时间戳或随机数
+            unique_suffix = str(int(time.time() * 100))[-6:] # 取时间戳后6位，足够随机且简短
+            
+            sku = f"{pinyin_initials}-{unique_suffix}"
+            app.logger.debug(f"DEBUG: Auto-generated SKU: {sku} for product: {product_name}")
+            
+        # --- SKU 自动生成逻辑结束 ---
+
         product = Product(
             name=form.name.data,
-            sku=form.sku.data,
+            sku=sku, # 使用生成的或用户输入的 SKU
             description=form.description.data,
             selling_price=form.selling_price.data,
             cost_price=form.cost_price.data,
@@ -86,12 +111,16 @@ def add():
             category_id=form.category_id.data,
             supplier_id=supplier_id
         )
-        db.session.add(product)
-        db.session.commit()
         
-        flash('商品添加成功', 'success')
-        return redirect(url_for('product.list'))
-    
+        try:
+            db.session.add(product)
+            db.session.commit()
+            flash('商品添加成功', 'success')
+            return redirect(url_for('product.list'))
+        except IntegrityError: # 捕获唯一性约束错误
+            db.session.rollback() # 回滚事务
+            flash('错误：生成的 SKU 可能已存在，请尝试手动输入 SKU 或稍后重试。', 'danger')
+        
     return render_template('product/form.html', form=form, title='添加商品')
 
 @product_bp.route('/edit/<int:id>', methods=['GET', 'POST'])
@@ -126,7 +155,7 @@ def edit(id):
             db.session.add(adjustment)
         
         product.name = form.name.data
-        product.sku = form.sku.data
+        product.sku = form.sku.data # SKU 从表单获取，用户可修改
         product.description = form.description.data
         product.selling_price = form.selling_price.data
         product.cost_price = form.cost_price.data
@@ -134,9 +163,13 @@ def edit(id):
         product.category_id = form.category_id.data
         product.supplier_id = supplier_id
         
-        db.session.commit()
-        flash('商品更新成功', 'success')
-        return redirect(url_for('product.list'))
+        try: # 同样在编辑时也需要捕获唯一性错误
+            db.session.commit()
+            flash('商品更新成功', 'success')
+            return redirect(url_for('product.list'))
+        except IntegrityError:
+            db.session.rollback()
+            flash('错误：更新后的 SKU 已存在，请尝试其他 SKU。', 'danger')
     
     return render_template('product/form.html', form=form, product=product, title='编辑商品')
 
@@ -146,7 +179,6 @@ def delete(id):
     """删除商品"""
     product = Product.query.get_or_404(id)
     
-    # 检查商品是否有关联订单项
     if product.order_items:
         flash('无法删除：该商品已有关联订单', 'danger')
         return redirect(url_for('product.list'))

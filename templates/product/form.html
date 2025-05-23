@@ -25,6 +25,8 @@
     
     <div class="form-group">
         {{ form.sku.label }}
+        {# ！！注意：SKU 字段的 'required' 属性现在由 forms.py 中的 Optional() 验证器控制。
+            HTML 层面不再强制 required，允许留空由后端自动生成。 ！！#}
         {{ form.sku(class="form-control") }}
         {% if form.sku.errors %}
         <div class="error-field">
