@@ -20,7 +20,7 @@
             <span>{{ raw_material.unit }}</span>
         </div>
         <div class="field-row">
-            <span class="field-label">当前库存:</span>
+            <span class="field-label">当前库存:</span> {# 明确显示当前库存 #}
             <span>{{ raw_material.stock_quantity }} {{ raw_material.unit }}</span>
         </div>
         {% if raw_material.safety_stock %}
@@ -35,13 +35,15 @@
 <form method="post">
     {{ form.csrf_token }}
     
+    {# 隐藏不相关的字段，因为这个表单现在专注于原材料调整 #}
     {{ form.adjustment_type(style="display: none;") }}
     {{ form.product_id(style="display: none;") }}
+    {# raw_material_id 字段虽然在后端被禁用，但这里仍然需要渲染以确保表单结构完整 #}
     {{ form.raw_material_id(style="display: none;") }}
     
     <div class="form-group">
         {{ form.adjustment_quantity.label }}
-        {{ form.adjustment_quantity(class="form-control") }}
+        {{ form.adjustment_quantity(class="form-control", placeholder="输入正数增加，负数减少") }} {# 添加提示 #}
         <small>正数表示增加库存，负数表示减少库存</small>
         {% if form.adjustment_quantity.errors %}
         <div class="error-field">
@@ -76,8 +78,6 @@
         {% endif %}
     </div>
     
-    <div class="form-group">
-        {{ form.submit(class="btn") }}
-    </div>
+    <button type="submit" class="btn btn-primary">提交调整</button>
 </form>
 {% endblock %}

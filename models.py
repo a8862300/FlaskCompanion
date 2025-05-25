@@ -1,3 +1,5 @@
+# models.py (只包含修改部分，在 RawMaterial 中添加 supplier_id)
+
 from datetime import datetime
 from flask_login import UserMixin
 from app import db
@@ -36,7 +38,7 @@ class Customer(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     # 关系
-    orders = db.relationship('Order', back_populates='customer', cascade='all, delete-orphan')
+    orders = db.relationship('Order', back_populates='customer', lazy=True)
     
     def __repr__(self):
         return f'<客户 {self.name}>'
@@ -46,15 +48,16 @@ class Supplier(db.Model):
     __tablename__ = 'suppliers'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     contact = db.Column(db.String(50))
     phone = db.Column(db.String(20))
     address = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     # 关系
-    products = db.relationship('Product', back_populates='supplier')
-    raw_material_purchases = db.relationship('RawMaterialPurchase', back_populates='supplier')
+    products = db.relationship('Product', back_populates='supplier', lazy=True)
+    raw_materials = db.relationship('RawMaterial', back_populates='supplier', lazy=True) # 新增关系
+    raw_material_purchases = db.relationship('RawMaterialPurchase', back_populates='supplier', lazy=True)
     
     def __repr__(self):
         return f'<供应商 {self.name}>'
@@ -64,12 +67,12 @@ class Category(db.Model):
     __tablename__ = 'categories'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     # 关系
-    products = db.relationship('Product', back_populates='category', cascade='all, delete-orphan')
+    products = db.relationship('Product', back_populates='category', lazy=True)
     
     def __repr__(self):
         return f'<分类 {self.name}>'
@@ -79,38 +82,50 @@ class Product(db.Model):
     __tablename__ = 'products'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    sku = db.Column(db.String(50), unique=True, nullable=False) # <--- 这里已添加 unique=True
+    name = db.Column(db.String(200), nullable=False)
+    sku = db.Column(db.String(50), unique=True, nullable=True) # SKU允许为空
     description = db.Column(db.Text)
     selling_price = db.Column(db.Float, nullable=False)
     cost_price = db.Column(db.Float, nullable=False)
     stock_quantity = db.Column(db.Integer, default=0)
+    
+    # 外键
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'))
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id')) # 默认供应商
+    
     created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
     # 关系
     category = db.relationship('Category', back_populates='products')
     supplier = db.relationship('Supplier', back_populates='products')
-    order_items = db.relationship('OrderItem', back_populates='product')
+    order_items = db.relationship('OrderItem', back_populates='product', lazy=True)
+    stock_adjustments = db.relationship('StockAdjustment', back_populates='product', lazy=True, primaryjoin="and_(StockAdjustment.product_id == Product.id, StockAdjustment.adjustment_type == 'product')")
     
     def __repr__(self):
-        return f'<商品 {self.name}>'
+        return f'<商品 {self.name} ({self.sku})>'
 
 class RawMaterial(db.Model):
     """原材料模型"""
     __tablename__ = 'raw_materials'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    unit = db.Column(db.String(20), nullable=False)  # 如：千克, 米, 个
+    name = db.Column(db.String(200), nullable=False)
+    unit = db.Column(db.String(20), nullable=False)  # 例如：千克, 米, 个
     stock_quantity = db.Column(db.Float, default=0)
     unit_cost = db.Column(db.Float, nullable=False)
-    safety_stock = db.Column(db.Float)  # 安全库存量
+    safety_stock = db.Column(db.Float, default=0) # 安全库存量
+    
+    # 新增外键和关系
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'), nullable=True) # 可以为空
+    supplier = db.relationship('Supplier', back_populates='raw_materials')
+    
     created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
     # 关系
-    purchases = db.relationship('RawMaterialPurchase', back_populates='raw_material', cascade='all, delete-orphan')
+    purchases = db.relationship('RawMaterialPurchase', back_populates='raw_material', lazy=True)
+    stock_adjustments = db.relationship('StockAdjustment', back_populates='raw_material', lazy=True, primaryjoin="and_(StockAdjustment.raw_material_id == RawMaterial.id, StockAdjustment.adjustment_type == 'raw_material')")
     
     def __repr__(self):
         return f'<原材料 {self.name}>'
@@ -120,27 +135,22 @@ class Order(db.Model):
     __tablename__ = 'orders'
     
     id = db.Column(db.Integer, primary_key=True)
-    order_number = db.Column(db.String(20), default=generate_order_number, unique=True, nullable=False)
+    order_number = db.Column(db.String(50), unique=True, nullable=False, default=generate_order_number)
     order_date = db.Column(db.DateTime, default=datetime.now)
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
-    status = db.Column(db.String(20), default='待支付')  # 待支付, 已支付, 已发货, 已完成, 已取消
-    payment_method = db.Column(db.String(20))  # 支付宝, 微信支付, 货到付款
-    total_amount = db.Column(db.Float, default=0)
+    total_amount = db.Column(db.Float, default=0.0)
+    status = db.Column(db.String(50), default='待支付')
+    payment_method = db.Column(db.String(50))
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
     # 关系
     customer = db.relationship('Customer', back_populates='orders')
-    order_items = db.relationship('OrderItem', back_populates='order', cascade='all, delete-orphan')
+    items = db.relationship('OrderItem', back_populates='order', cascade='all, delete-orphan', lazy=True)
     
     def __repr__(self):
         return f'<订单 {self.order_number}>'
-    
-    def calculate_total(self):
-        """计算订单总金额"""
-        total = sum(item.subtotal for item in self.order_items)
-        self.total_amount = total
-        return total
 
 class OrderItem(db.Model):
     """订单项模型"""
@@ -152,21 +162,17 @@ class OrderItem(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
     subtotal = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     
     # 关系
-    order = db.relationship('Order', back_populates='order_items')
+    order = db.relationship('Order', back_populates='items')
     product = db.relationship('Product', back_populates='order_items')
     
     def __repr__(self):
-        return f'<订单项 {self.id}>'
-    
-    def calculate_subtotal(self):
-        """计算小计金额"""
-        self.subtotal = self.quantity * self.unit_price
-        return self.subtotal
+        return f'<订单项 {self.id} - 订单 {self.order_id} - 商品 {self.product_id}>'
 
 class RawMaterialPurchase(db.Model):
-    """原材料采购记录模型"""
+    """原材料采购记录"""
     __tablename__ = 'raw_material_purchases'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -203,13 +209,12 @@ class StockAdjustment(db.Model):
     quantity_after = db.Column(db.Float, nullable=False)
     adjustment_quantity = db.Column(db.Float, nullable=False)  # 正数表示增加，负数表示减少
     reason = db.Column(db.Text, nullable=False)
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_by = db.Column(db.String(100)) # 记录操作者
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     # 关系
-    product = db.relationship('Product')
-    raw_material = db.relationship('RawMaterial')
-    user = db.relationship('User')
+    product = db.relationship('Product', back_populates='stock_adjustments', primaryjoin="and_(StockAdjustment.product_id == Product.id, StockAdjustment.adjustment_type == 'product')")
+    raw_material = db.relationship('RawMaterial', back_populates='stock_adjustments', primaryjoin="and_(StockAdjustment.raw_material_id == RawMaterial.id, StockAdjustment.adjustment_type == 'raw_material')")
     
     def __repr__(self):
         return f'<库存调整 {self.id}>'

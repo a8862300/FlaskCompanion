@@ -9,7 +9,7 @@ from flask_login import LoginManager, current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_wtf.csrf import CSRFProtect
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 class Base(DeclarativeBase):
     pass
@@ -26,7 +26,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["WTF_CSRF_ENABLED"] = True
-app.config["WTF_CSRF_CHECK_DEFAULT"] = False
+app.config["WTF_CSRF_CHECK_DEFAULT"] =True
 csrf = CSRFProtect(app)
 db.init_app(app)
 login_manager = LoginManager()

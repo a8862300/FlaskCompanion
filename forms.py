@@ -1,6 +1,8 @@
+# forms.py (完整文件，已在 StockAdjustmentForm 中修改 product_id 的验证器)
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, FloatField, IntegerField, SelectField, DateField, HiddenField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange # 导入 Optional
+from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange
 from datetime import datetime
 
 class LoginForm(FlaskForm):
@@ -41,8 +43,7 @@ class CategoryForm(FlaskForm):
 class ProductForm(FlaskForm):
     """商品表单"""
     name = StringField('商品名称', validators=[DataRequired(message='商品名称不能为空')])
-    # SKU 字段现在是可选的，以便后端可以自动生成
-    sku = StringField('SKU', validators=[Optional()]) # <--- 关键修改：DataRequired 变为 Optional()
+    sku = StringField('SKU', validators=[Optional()])
     description = TextAreaField('描述')
     selling_price = FloatField('销售价格', validators=[DataRequired(message='销售价格不能为空'), NumberRange(min=0, message='价格必须大于等于0')])
     cost_price = FloatField('成本价格', validators=[DataRequired(message='成本价格不能为空'), NumberRange(min=0, message='价格必须大于等于0')])
@@ -58,6 +59,7 @@ class RawMaterialForm(FlaskForm):
     stock_quantity = FloatField('库存数量', validators=[NumberRange(min=0, message='库存不能为负数')])
     unit_cost = FloatField('单位成本', validators=[DataRequired(message='单位成本不能为空'), NumberRange(min=0, message='成本必须大于等于0')])
     safety_stock = FloatField('安全库存量', validators=[Optional(), NumberRange(min=0, message='安全库存不能为负数')])
+    supplier_id = SelectField('默认供应商', coerce=int, validators=[Optional()])
     submit = SubmitField('保存')
 
 class RawMaterialPurchaseForm(FlaskForm):
@@ -101,11 +103,10 @@ class OrderItemForm(FlaskForm):
 
 class StockAdjustmentForm(FlaskForm):
     """库存调整表单"""
-    # 保持为 SelectField，以便在路由中设置 choices
     adjustment_type = SelectField('调整类型', choices=[('product', '成品商品'), ('raw_material', '原材料')], validators=[DataRequired(message='调整类型不能为空')])
-    # product_id 保持 SelectField，并设置为 DataRequired
-    product_id = SelectField('商品', coerce=int, validators=[DataRequired(message='商品ID不能为空')])
-    raw_material_id = SelectField('原材料', coerce=int, validators=[Optional()]) # 保持 SelectField，但允许可选
+    # **这里是第 126 行的修改：将 DataRequired 改为 Optional**
+    product_id = SelectField('商品', coerce=int, validators=[Optional()]) 
+    raw_material_id = SelectField('原材料', coerce=int, validators=[Optional()])
     
     adjustment_quantity = FloatField('调整数量', validators=[DataRequired(message='调整数量不能为空')])
     reason = SelectField('调整原因', choices=[

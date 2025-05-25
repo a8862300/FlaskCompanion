@@ -31,3 +31,5 @@ pypinyin = {version = "^0.54.0", python = ">=3.11,<4"}
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
