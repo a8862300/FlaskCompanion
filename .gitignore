@@ -1,0 +1,17 @@
+# Python specific ignores
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python/
+env/
+venv/
+*.env
+
+# IDE specific ignores (optional, based on your IDE)
+.idea/
+.vscode/
+
+# Database and instance folder
+*.db
+instance/
