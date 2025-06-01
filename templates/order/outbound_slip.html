@@ -309,7 +309,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in order.order_items %}
+                    {% for item in order.items %}
                     <tr>
                         <td>{{ loop.index }}</td>
                         <td>{{ item.product.name }}</td>
@@ -323,7 +323,7 @@
             </table>
 
             <div class="slip-total-screen">
-                <div>合计数量: {{ order.order_items|sum(attribute='quantity') }} 件</div>
+                <div>合计数量: {{ order.items|sum(attribute='quantity') }} 件</div>
                 <div>合计金额: {{ "%.2f"|format(order.total_amount) }} 元</div>
             </div>
 
@@ -373,7 +373,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in order.order_items %}
+                    {% for item in order.items %}
                     <tr>
                         <td>{{ loop.index }}</td> {# 对应编号 #}
                         <td>{{ item.product.name }}</td> {# 对应物品名称 #}
@@ -387,7 +387,7 @@
                 <tfoot>
                     <tr>
                         <td colspan="2" style="text-align: left;">合计:</td> {# "合计:" 左对齐 #}
-                        <td colspan="1" style="text-align: center;">{{ order.order_items|sum(attribute='quantity') }}件</td> {# 合计数量居中 #}
+                        <td colspan="1" style="text-align: center;">{{ order.items|sum(attribute='quantity') }}件</td> {# 合计数量居中 #}
                         <td colspan="2" style="text-align: right;">合计金额:</td> {# "合计金额:" 右对齐 #}
                         <td colspan="1" style="text-align: right;">{{ "%.2f"|format(order.total_amount) }}元</td> {# 金额右对齐 #}
                     </tr>

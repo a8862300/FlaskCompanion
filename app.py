@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager, current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 logging.basicConfig(level=logging.INFO)
 
@@ -42,6 +42,10 @@ def before_request():
     else:
         app.logger.debug("DEBUG: No active authenticated user session.")
     app.logger.debug(f"DEBUG: Current session content: {dict(session)}")
+
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=generate_csrf)
 
 with app.app_context():
     import models

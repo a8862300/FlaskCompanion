@@ -741,60 +741,74 @@ def delete(id):
         )
         db.session.add(adjustment)
 
+    try:
+        # 删除所有订单项
+        for item in order_items:
+            db.session.delete(item)
 
-    # 删除订单和关联的订单项
-    db.session.delete(order)  # 这会级联删除订单项（假设设置了级联删除）
-    db.session.commit()
+        # 最后删除订单本身
+        db.session.delete(order)
+        db.session.commit()
+        flash('订单删除成功', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'删除订单失败: {str(e)}', 'danger')
 
-    flash('订单删除成功', 'success')
     return redirect(url_for('order.list'))
+
 
 @order_bp.route('/<int:id>/outbound_slip')
 @login_required
 def outbound_slip(id):
-    """打印出库单"""
+    """生成并显示出库单"""
     order = Order.query.get_or_404(id)
     return render_template('order/outbound_slip.html', order=order)
+
 
 @order_bp.route('/<int:id>/update_status', methods=['POST'])
 @login_required
 def update_status(id):
-    """更新订单状态"""
+    """更新订单状态并处理库存逻辑"""
     order = Order.query.get_or_404(id)
-    old_status = order.status # 记录旧状态
+    new_status = request.form.get('status')
 
-    status = request.form.get('status')
-    if status in ['待支付', '已支付', '已发货', '已完成', '已取消']:
-        # 如果状态发生了变化
-        if status != old_status:
-            # 从其他状态改为"已取消"，恢复库存
-            if status == '已取消' and old_status != '已取消':
-                for item in order.order_items:
+    # 允许的状态列表，用于验证
+    allowed_statuses = ['待支付', '已支付', '已发货', '已完成', '已取消']
+
+    if new_status and new_status in allowed_statuses:
+        old_status = order.status
+
+        if old_status != new_status:
+            # 获取所有订单项，用于库存调整
+            order_items = OrderItem.query.filter_by(order_id=order.id).all()
+
+            if new_status == '已取消':
+                # 从非“已取消”状态变为“已取消”时，恢复库存
+                if old_status != '已取消':
+                    for item in order_items:
+                        product = Product.query.get(item.product_id)
+                        if product:
+                            old_stock = product.stock_quantity
+                            product.stock_quantity += item.quantity
+
+                            # 记录库存变动
+                            adjustment = StockAdjustment(
+                                adjustment_type='product',
+                                product_id=product.id,
+                                quantity_before=old_stock,
+                                quantity_after=product.stock_quantity,
+                                adjustment_quantity=item.quantity, # 增加库存
+                                reason=f'订单取消: 订单号 {order.order_number if order.order_number else order.id}',
+                                created_by=current_user.id if current_user.is_authenticated else None
+                            )
+                            db.session.add(adjustment)
+            elif old_status == '已取消':
+                # 从“已取消”状态变为其他非“已取消”状态时，扣减库存
+                # 需要检查库存是否足够
+                for item in order_items:
                     product = Product.query.get(item.product_id)
-                    if product: # 检查商品是否存在
-                         old_stock = product.stock_quantity
-                         product.stock_quantity += item.quantity
-
-                         # 记录库存变动
-                         adjustment = StockAdjustment(
-                             adjustment_type='product',
-                             product_id=product.id,
-                             quantity_before=old_stock,
-                             quantity_after=product.stock_quantity,
-                             adjustment_quantity=item.quantity,
-                             reason=f'订单取消: 订单号 {order.order_number if order.order_number else order.id}',
-                             created_by=current_user.id if current_user.is_authenticated else None
-                         )
-                         db.session.add(adjustment)
-
-            # 从"已取消"状态改为其他状态，重新扣减库存
-            elif old_status == '已取消' and status != '已取消':
-                for item in order.order_items:
-                    product = Product.query.get(item.product_id)
-                    if product: # 检查商品是否存在
-                        # 检查库存
+                    if product:
                         if item.quantity > product.stock_quantity:
-                            # 如果库存不足，回滚之前的session操作并报错
                             db.session.rollback()
                             flash(f'无法恢复订单: 商品 "{product.name}" 库存不足: 需要 {item.quantity}, 实际 {product.stock_quantity}', 'danger')
                             return redirect(url_for('order.detail', id=id))
@@ -809,14 +823,14 @@ def update_status(id):
                             product_id=product.id,
                             quantity_before=old_stock,
                             quantity_after=product.stock_quantity,
-                            adjustment_quantity=-item.quantity,
+                            adjustment_quantity=-item.quantity, # 减少库存
                             reason=f'订单恢复: 订单号 {order.order_number if order.order_number else order.id}',
                             created_by=current_user.id if current_user.is_authenticated else None
                         )
                         db.session.add(adjustment)
 
             # 更新状态
-            order.status = status
+            order.status = new_status
             db.session.commit()
             flash('订单状态更新成功', 'success')
         else:
@@ -826,5 +840,3 @@ def update_status(id):
         flash('无效的订单状态', 'danger')
 
     return redirect(url_for('order.detail', id=id))
-
-# ... 其他可能的路由，如 /orders/<int:id>/print, /orders/<int:id>/update_status, /orders/<int:id>/delete 等 ...

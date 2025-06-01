@@ -8,7 +8,6 @@
     <a href="{{ url_for('order.add') }}" class="btn">添加订单</a>
 </div>
 
-<!-- 高级筛选表单 -->
 <div class="filter-form">
     <form action="{{ url_for('order.list') }}" method="get">
         <div class="form-row">
@@ -80,7 +79,6 @@
     </form>
 </div>
 
-<!-- 订单列表 -->
 {% if orders.items %}
 <table>
     <thead>
@@ -114,7 +112,6 @@
     </tbody>
 </table>
 
-<!-- 分页 -->
 <div class="pagination-container">
     <ul class="pagination">
         {% if orders.has_prev %}
@@ -145,7 +142,6 @@
 <p>暂无订单记录</p>
 {% endif %}
 
-<!-- 删除确认模态框 -->
 <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 100;">
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; min-width: 300px;">
         <h3>确认删除</h3>
@@ -153,6 +149,7 @@
         <div style="text-align: right; margin-top: 20px;">
             <button onclick="closeModal()" class="btn btn-secondary">取消</button>
             <form id="deleteForm" method="post" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-danger">确认删除</button>
             </form>
         </div>
@@ -220,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 日期格式化工具函数 YYYY-MM-DD
+    // 日期格式化工具函数YYYY-MM-DD
     function formatDate(date) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
