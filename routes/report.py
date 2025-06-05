@@ -1,15 +1,14 @@
-from flask import Blueprint, render_template, request, Response, flash
+from flask import Blueprint, render_template, request, Response, flash, current_app
 from flask_login import login_required
 from datetime import datetime
 import csv
 import io
 from sqlalchemy import func, extract
 
-from app import db
-from models import Order, OrderItem, Product, Category, RawMaterialPurchase, Customer, RawMaterial, Supplier
+from models import db, Order, OrderItem, Product, Category, Customer, RawMaterial, RawMaterialPurchase, Supplier
 from forms import ReportDateRangeForm
 
-report_bp = Blueprint('report', __name__, url_prefix='/reports')
+report_bp = Blueprint('report', __name__, url_prefix='/report')
 
 @report_bp.route('/sales', methods=['GET', 'POST'])
 @login_required

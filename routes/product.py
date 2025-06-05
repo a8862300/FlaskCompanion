@@ -1,7 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from app import app # 引入 app 实例，因为我们需要 logger
-from app import db
+from models import db
 # 确保导入了 RawMaterial，因为 StockAdjustmentForm 中会用到
 from models import Product, Category, Supplier, StockAdjustment, RawMaterial 
 
@@ -15,9 +14,9 @@ from sqlalchemy.exc import IntegrityError
 from forms import ProductForm, StockAdjustmentForm # 确保 StockAdjustmentForm 导入正确
 
 
-product_bp = Blueprint('product', __name__, url_prefix='/products')
+product_bp = Blueprint('product', __name__, url_prefix='/product')
 
-@product_bp.route('/')
+@product_bp.route('/list')
 @login_required
 def list():
     """商品列表"""
@@ -97,7 +96,7 @@ def add():
             unique_suffix = str(int(time.time() * 100))[-6:] # 取时间戳后6位，足够随机且简短
             
             sku = f"{pinyin_initials}-{unique_suffix}"
-            app.logger.debug(f"DEBUG: Auto-generated SKU: {sku} for product: {product_name}")
+            current_app.logger.debug(f"DEBUG: Auto-generated SKU: {sku} for product: {product_name}")
             
         # --- SKU 自动生成逻辑结束 ---
 
@@ -219,8 +218,8 @@ def adjust_stock(id):
     
     # --- 新增调试日志：打印浏览器发送的表单数据 ---
     if request.method == 'POST':
-        app.logger.debug(f"DEBUG: Form data received from browser (POST): {request.form}") # 使用 request.form 获取数据
-        app.logger.debug(f"DEBUG: CSRF token from browser (POST): {request.form.get('csrf_token')}") # 直接从 request.form 获取 csrf_token
+        current_app.logger.debug(f"DEBUG: Form data received from browser (POST): {request.form}") # 使用 request.form 获取数据
+        current_app.logger.debug(f"DEBUG: CSRF token from browser (POST): {request.form.get('csrf_token')}") # 直接从 request.form 获取 csrf_token
     # --- 调试日志结束 ---
 
     if form.validate_on_submit():
@@ -249,9 +248,9 @@ def adjust_stock(id):
         return redirect(url_for('product.detail', id=product.id))
     else:
         # 如果验证失败，打印表单错误，这对于调试非常有用
-        app.logger.debug(f"DEBUG: Form validation failed. Errors: {form.errors}")
+        current_app.logger.debug(f"DEBUG: Form validation failed. Errors: {form.errors}")
         if 'csrf_token' in form.errors:
-            app.logger.debug(f"DEBUG: CSRF token specific errors: {form.errors['csrf_token']}")
+            current_app.logger.debug(f"DEBUG: CSRF token specific errors: {form.errors['csrf_token']}")
     
     return render_template(
         'product/adjust.html', 

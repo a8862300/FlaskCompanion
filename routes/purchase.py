@@ -1,14 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from datetime import datetime
 
-from app import db
+from models import db
 from models import RawMaterialPurchase, RawMaterial, Supplier, StockAdjustment
 from forms import RawMaterialPurchaseForm
 
-purchase_bp = Blueprint('purchase', __name__, url_prefix='/purchases')
+purchase_bp = Blueprint('purchase', __name__, url_prefix='/purchase')
 
-@purchase_bp.route('/')
+@purchase_bp.route('/list')
 @login_required
 def list():
     """原材料采购列表"""

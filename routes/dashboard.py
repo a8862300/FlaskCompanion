@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import func
 
-from app import db
+from models import db
 from models import User, Customer, Product, RawMaterial, Order, Category, OrderItem, StockAdjustment
 
-dashboard_bp = Blueprint('dashboard', __name__)
+dashboard_bp = Blueprint('dashboard', __name__, url_prefix=None)
 
 @dashboard_bp.route('/')
 @login_required

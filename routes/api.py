@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_login import login_required
 
+from models import db
 from models import Product, Customer, Supplier, Category, RawMaterial
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')

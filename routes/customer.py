@@ -1,13 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 
-from app import db
+from models import db
 from models import Customer
 from forms import CustomerForm
 
-customer_bp = Blueprint('customer', __name__, url_prefix='/customers')
+customer_bp = Blueprint('customer', __name__, url_prefix='/customer')
 
-@customer_bp.route('/')
+@customer_bp.route('/list')
 @login_required
 def list():
     """客户列表"""

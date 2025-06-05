@@ -1,15 +1,15 @@
 # raw_material.py (完整替换)
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from app import db
+from models import db
 from models import RawMaterial, StockAdjustment, Product, RawMaterialPurchase, Supplier
 from forms import RawMaterialForm, StockAdjustmentForm
 from datetime import datetime # 确保 datetime 在这里被导入
 
-raw_material_bp = Blueprint('raw_material', __name__, url_prefix='/raw-materials')
+raw_material_bp = Blueprint('raw_material', __name__, url_prefix='/raw_material')
 
-@raw_material_bp.route('/')
+@raw_material_bp.route('/list')
 @login_required
 def list():
     """原材料列表"""

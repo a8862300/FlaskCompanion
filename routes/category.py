@@ -1,13 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 
-from app import db
+from models import db
 from models import Category
 from forms import CategoryForm
 
-category_bp = Blueprint('category', __name__, url_prefix='/categories')
+category_bp = Blueprint('category', __name__, url_prefix='/category')
 
-@category_bp.route('/')
+@category_bp.route('/list')
 @login_required
 def list():
     """商品分类列表"""

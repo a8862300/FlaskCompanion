@@ -1,11 +1,10 @@
-# models.py (只包含修改部分，在 RawMaterial 中添加 supplier_id)
-
 from datetime import datetime
 from flask_login import UserMixin
-from app import db
-from sqlalchemy.sql import func
+from flask_sqlalchemy import SQLAlchemy
 import secrets
 import string
+
+db = SQLAlchemy()
 
 def generate_order_number():
     """生成唯一的订单号: 年月日 + 6位随机字符"""

@@ -1,18 +1,17 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 
-# 假设你的 app 实例和 db 实例在 app.py 中被创建并导入
-from app import db
+from models import db
 # 假设你的所有模型都在 models.py 中定义并导入
 from models import Order, OrderItem, Customer, Product, Category, StockAdjustment, User # 导入User模型以便记录stock adjustments created_by
 # 假设你的订单相关的表单在 forms.py 中定义并导入
 from forms import OrderForm#, StockAdjustmentForm # StockAdjustmentForm 没有在routes里用到，先注释
 
 # 创建订单蓝图
-order_bp = Blueprint('order', __name__, url_prefix='/orders')
+order_bp = Blueprint('order', __name__, url_prefix='/order')
 
-@order_bp.route('/')
+@order_bp.route('/list')
 @login_required
 def list():
     """订单列表"""
@@ -779,6 +778,7 @@ def update_status(id):
         old_status = order.status
 
         if old_status != new_status:
+            # 获取所有订单项，用于库存
             # 获取所有订单项，用于库存调整
             order_items = OrderItem.query.filter_by(order_id=order.id).all()
 

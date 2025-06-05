@@ -1,13 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 
-from app import db
+from models import db
 from models import Supplier
 from forms import SupplierForm
 
-supplier_bp = Blueprint('supplier', __name__, url_prefix='/suppliers')
+supplier_bp = Blueprint('supplier', __name__, url_prefix='/supplier')
 
-@supplier_bp.route('/')
+@supplier_bp.route('/list')
 @login_required
 def list():
     """供应商列表"""
