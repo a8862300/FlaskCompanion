@@ -1,0 +1,51 @@
+# 文件名: .github/workflows/ci.yml
+
+name: Python CI/CD # 工作流的名称，在 GitHub Actions 界面显示
+
+on:
+  push:
+    branches: [ main ] # 当代码推送到 'main' 分支时触发
+  pull_request:
+    branches: [ main ] # 当有 Pull Request 到 'main' 分支时触发
+  # 也可以添加 workflow_dispatch: 来允许手动触发工作流
+  # workflow_dispatch:
+
+jobs:
+  build-and-test: # 定义一个名为 'build-and-test' 的作业
+    name: Build & Test on Python ${{ matrix.python-version }} # 作业在 UI 上的显示名称
+    runs-on: ubuntu-latest # 在最新的 Ubuntu 虚拟机上运行此作业
+
+    # 定义一个策略，允许在多个 Python 版本上运行相同的步骤
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"] # 我们将在 Python 3.11 和 3.12 上测试
+
+    steps:
+    - name: Checkout code # 步骤1: 检出 Git 仓库的代码
+      uses: actions/checkout@v4 # 使用 GitHub 官方的 actions/checkout Action 来克隆仓库
+
+    - name: Set up Python ${{ matrix.python-version }} # 步骤2: 设置指定的 Python 环境
+      uses: actions/setup-python@v5 # 使用 GitHub 官方的 actions/setup-python Action 来配置 Python
+      with:
+        python-version: ${{ matrix.python-version }} # 使用矩阵中定义的 Python 版本
+        cache: 'poetry' # 启用 Poetry 依赖的缓存，可以加快后续运行速度
+
+    - name: Install Poetry # 步骤3: 安装 Poetry 包管理器
+      run: |
+        pip install poetry
+        # 如果你未来需要生成 requirements.txt，可以安装这个插件
+        # poetry self add poetry-plugin-export
+
+    - name: Install dependencies with Poetry # 步骤4: 使用 Poetry 安装项目依赖
+      # --no-root 选项表示不将当前项目本身作为可安装的包来安装，只安装依赖
+      run: poetry install --no-root
+
+    - name: Run pre-commit checks # 步骤5: 运行 .pre-commit-config.yaml 中定义的各种代码质量检查
+      # 这些检查包括 Black (格式化), isort (导入排序), Flake8 (风格/错误), Bandit (安全), MyPy (类型检查)
+      # pre-commit 工具会自动读取你的 .pre-commit-config.yaml 文件
+      # poetry run 是因为 pre-commit 通常安装在项目的虚拟环境中
+      run: poetry run pre-commit run --all-files # --all-files 确保检查所有文件，而不仅仅是修改过的文件
+
+    - name: Run Pytest tests # 步骤6: 运行 Pytest 单元测试
+      # 确保 pytest 已经在你的 pyproject.toml 的开发依赖中，并通过 poetry install 安装了
+      run: poetry run pytest
