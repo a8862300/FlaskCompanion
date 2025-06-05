@@ -6,12 +6,12 @@ on:
   push:
     branches:
       - main
-      - feature/flask-factory-pattern # **修改点1：新增此行，让工作流在 'feature/flask-factory-pattern' 分支的 push 时也触发**
+      - feature/flask-factory-pattern # 修改点1：让工作流在 'feature/flask-factory-pattern' 分支的 push 时也触发
   pull_request:
     branches:
       - main
-      - feature/flask-factory-pattern # **修改点2：新增此行，让工作流在针对 'feature/flask-factory-pattern' 分支的 PR 时也触发**
-  workflow_dispatch: # **修改点3：新增此行，允许你从 GitHub Actions 界面手动触发此工作流**
+      - feature/flask-factory-pattern # 修改点2：让工作流在针对 'feature/flask-factory-pattern' 分支的 PR 时也触发
+  workflow_dispatch: # 修改点3：允许你从 GitHub Actions 界面手动触发此工作流
 
 jobs:
   build-and-test: # 定义一个名为 'build-and-test' 的作业
@@ -34,21 +34,17 @@ jobs:
         cache: 'poetry' # 启用 Poetry 依赖的缓存，可以加快后续运行速度
 
     - name: Install Poetry # 步骤3: 安装 Poetry 包管理器
-      # **修改点4：更新安装 Poetry 的方式，确保其可执行文件路径正确添加到 PATH 环境变量**
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 - # 使用 Poetry 官方推荐的安装脚本
-        echo "$HOME/.poetry/bin" >> $GITHUB_PATH # 将 Poetry 的 bin 目录添加到 GitHub Actions 的 PATH
+      uses: snok/install-poetry@v1 # **关键修改：使用专门的 Action 来安装 Poetry**
+      # with:
+      #   version: 1.8.2 # 建议指定一个具体的 Poetry 版本，例如 1.8.2 或 1.7.0。
+                         # 如果你想要最新稳定版，可以注释掉这一行或不写。
+                         # 例如，你可以在这里明确写 version: 1.8.2 或者 1.x.x
 
     - name: Install dependencies with Poetry # 步骤4: 使用 Poetry 安装项目依赖
-      # --no-root 选项表示不将当前项目本身作为可安装的包来安装，只安装依赖
       run: poetry install --no-root
 
     - name: Run pre-commit checks # 步骤5: 运行 .pre-commit-config.yaml 中定义的各种代码质量检查
-      # 这些检查包括 Black (格式化), isort (导入排序), Flake8 (风格/错误), Bandit (安全), MyPy (类型检查)
-      # pre-commit 工具会自动读取你的 .pre-commit-config.yaml 文件
-      # poetry run 是因为 pre-commit 通常安装在项目的虚拟环境中
-      run: poetry run pre-commit run --all-files # --all-files 确保检查所有文件，而不仅仅是修改过的文件
+      run: poetry run pre-commit run --all-files
 
     - name: Run Pytest tests # 步骤6: 运行 Pytest 单元测试
-      # 确保 pytest 已经在你的 pyproject.toml 的开发依赖中，并通过 poetry install 安装了
       run: poetry run pytest
