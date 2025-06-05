@@ -4,11 +4,14 @@ name: Python CI/CD # 工作流的名称，在 GitHub Actions 界面显示
 
 on:
   push:
-    branches: [ main ] # 当代码推送到 'main' 分支时触发
+    branches:
+      - main
+      - feature/flask-factory-pattern # **新增：让工作流在 'feature/flask-factory-pattern' 分支的 push 时也触发**
   pull_request:
-    branches: [ main ] # 当有 Pull Request 到 'main' 分支时触发
-  # 也可以添加 workflow_dispatch: 来允许手动触发工作流
-  # workflow_dispatch:
+    branches:
+      - main
+      - feature/flask-factory-pattern # **新增：让工作流在针对 'feature/flask-factory-pattern' 分支的 PR 时也触发**
+  workflow_dispatch: # **新增：允许你从 GitHub Actions 界面手动触发此工作流**
 
 jobs:
   build-and-test: # 定义一个名为 'build-and-test' 的作业
