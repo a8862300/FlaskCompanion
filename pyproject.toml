@@ -24,13 +24,12 @@ wtforms = ">=3.2.1"
 pypinyin = {version = "^0.54.0", python = ">=3.11,<4"} 
 
 
-#[tool.poetry.group.dev.dependencies]
-#pytest = "^7.0.0"
-#black = "^24.0.0"
-python-dotenv = "^1.1.0"
-click = "^8.2.1"
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.4.0"
 pytest-flask = "^1.3.0"
+black = "^24.0.0"
+python-dotenv = "^1.1.0"
+click = "^8.2.1"
 bandit = "^1.8.3"
 pre-commit = "^4.2.0"
 
