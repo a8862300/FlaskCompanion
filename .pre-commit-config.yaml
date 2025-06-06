@@ -28,13 +28,12 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - "sqlalchemy"
-          - "types-sqlalchemy"
-          - "types-flask-sqlalchemy"
-          - "types-Flask"
-          - "types-Werkzeug"
-          - "types-click"
-          - "types-setuptools"
+          - "sqlalchemy>=2.0.0"
+          - "flask"
+          - "flask-sqlalchemy"
+          - "flask-login"
+          - "flask-wtf"
+          - "python-dotenv"
 
   - repo: local
     hooks:
@@ -50,4 +49,8 @@ repos:
           - flask-sqlalchemy
           - flask-login
           - flask-wtf
+          - python-dotenv
+          - email_validator
+          - pypinyin
+          - gunicorn
         pass_filenames: false
