@@ -2,6 +2,7 @@ import os
 import logging
 from datetime import datetime
 import secrets
+from typing import Any
 from dotenv import load_dotenv
 from flask import Flask, g, session, jsonify
 from sqlalchemy.orm import DeclarativeBase
@@ -17,7 +18,7 @@ class Base(DeclarativeBase):
 
 load_dotenv()
 
-def create_app():
+def create_app() -> Flask:
     app = Flask(__name__)
     app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(32))
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///inventory.db")

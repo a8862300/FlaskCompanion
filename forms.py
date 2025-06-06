@@ -1,5 +1,6 @@
 # forms.py (完整文件，已在 StockAdjustmentForm 中修改 product_id 的验证器)
 
+from typing import Any, List, Optional as OptionalType
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, FloatField, IntegerField, SelectField, DateField, HiddenField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Email, Length, Optional, NumberRange
@@ -7,16 +8,16 @@ from datetime import datetime
 
 class LoginForm(FlaskForm):
     """登录表单"""
-    username = StringField('用户名', validators=[DataRequired(message='用户名不能为空')])
-    password = PasswordField('密码', validators=[DataRequired(message='密码不能为空')])
-    submit = SubmitField('登录')
+    username: StringField = StringField('用户名', validators=[DataRequired(message='用户名不能为空')])
+    password: PasswordField = PasswordField('密码', validators=[DataRequired(message='密码不能为空')])
+    submit: SubmitField = SubmitField('登录')
 
 class UserForm(FlaskForm):
     """用户表单"""
-    username = StringField('用户名', validators=[DataRequired(message='用户名不能为空'), Length(min=2, max=20)])
-    password = PasswordField('密码', validators=[Length(min=6, max=20, message='密码长度必须在6到20个字符之间')])
-    role = SelectField('角色', choices=[('user', '普通用户'), ('admin', '管理员')])
-    submit = SubmitField('保存')
+    username: StringField = StringField('用户名', validators=[DataRequired(message='用户名不能为空'), Length(min=2, max=20)])
+    password: PasswordField = PasswordField('密码', validators=[Length(min=6, max=20, message='密码长度必须在6到20个字符之间')])
+    role: SelectField = SelectField('角色', choices=[('user', '普通用户'), ('admin', '管理员')])
+    submit: SubmitField = SubmitField('保存')
 
 class CustomerForm(FlaskForm):
     """客户表单"""
