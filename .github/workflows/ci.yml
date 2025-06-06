@@ -1,5 +1,6 @@
 name: Python CI/CD
 
+# 测试 GitHub 连接正常性
 on:
   push:
     branches:
@@ -43,6 +44,9 @@ jobs:
 
       - name: 配置 PyPI 镜像为清华源
         run: poetry config repositories.pypi https://pypi.tuna.tsinghua.edu.cn/simple
+
+      - name: Update Poetry Lock File
+        run: poetry lock --no-update
 
       - name: Install dependencies with Poetry
         run: poetry install --no-root
