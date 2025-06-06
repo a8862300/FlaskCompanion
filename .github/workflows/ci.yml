@@ -18,8 +18,6 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-      fail-fast: false
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,33 +26,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
 
       - name: Install Poetry
         uses: abatilo/actions-poetry@v3
         with:
           poetry-version: '1.8.2'
 
-      - name: Cache Poetry virtualenv
-        uses: actions/cache@v4
-        id: cache
-        with:
-          path: ~/.virtualenvs
-          key: venv-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            venv-${{ matrix.python-version }}-
-
-      - name: Configure Poetry
+      - name: Configure Poetry and Verify Installation
         run: |
           poetry config virtualenvs.in-project true
-          poetry config repositories.pypi https://pypi.tuna.tsinghua.edu.cn/simple
+          echo "--- Verifying Poetry Installation ---"
+          poetry --version
+          which poetry
+          echo "Current PATH: $PATH"
+          echo "--- End Verification ---"
 
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: 配置 PyPI 镜像为清华源
+        run: poetry config repositories.pypi https://pypi.tuna.tsinghua.edu.cn/simple
+
+      - name: Install dependencies with Poetry
         run: poetry install --no-root
 
       - name: Run pre-commit checks
-        run: poetry run pre-commit run --all-files || true
+        run: poetry run pre-commit run --all-files
 
-      - name: Run Pytest
-        run: poetry run pytest -v
+      - name: Run Pytest tests
+        run: poetry run pytest
