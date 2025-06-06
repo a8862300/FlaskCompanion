@@ -25,11 +25,22 @@ repos:
       - id: bandit
         language_version: python3
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+  - repo: local
     hooks:
       - id: mypy
-        language_version: python3
+        name: mypy type checking
+        entry: poetry run mypy
+        language: system
+        types: [python]
+        require_serial: true
+        additional_dependencies:
+          - "sqlalchemy"
+          - "types-sqlalchemy"
+          - "types-flask-sqlalchemy"
+          - "types-Flask"
+          - "types-Werkzeug"
+          - "types-click"
+          - "types-setuptools"
 
   - repo: local
     hooks:
