@@ -1,54 +1,99 @@
 name: Python CI/CD
 
-# 测试 GitHub 连接正常性
 on:
   push:
-    branches:
-      - main
-      - feature/flask-factory-pattern
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
-      - feature/flask-factory-pattern
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build-and-test:
-    name: Build & Test on Python ${{ matrix.python-version }}
+  test:
+    name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
 
       - name: Install Poetry
         uses: abatilo/actions-poetry@v3
         with:
           poetry-version: '1.8.2'
 
-      - name: Configure pip and Poetry
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py-${{ matrix.python-version }}-poetry-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-py-${{ matrix.python-version }}-poetry-
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple
-          pip config set global.timeout 1000
           poetry config virtualenvs.in-project true
-          poetry config repositories.pypi https://repo.huaweicloud.com/repository/pypi/simple
-          echo "--- Verifying Installation ---"
-          poetry --version
-          which poetry
+          poetry install --no-interaction --no-root
 
-      - name: Update Poetry Lock File
-        run: poetry lock --no-update
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
 
-      - name: Install dependencies with Poetry
-        run: poetry install --no-root
+      - name: Run tests
+        run: |
+          poetry run pytest -v --junitxml=test-results.xml
+
+      - name: Run security scan
+        run: |
+          poetry run bandit -r . -f txt -o bandit_report.txt || true
+          cat bandit_report.txt
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            test-results.xml
+            bandit_report.txt
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      # 如果需要发布到PyPI,取消下面的注释
+      # - name: Publish to PyPI
+      #   env:
+      #     TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+      #     TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      #   run: twine upload dist/*
 
       - name: Run pre-commit checks
         run: poetry run pre-commit run --all-files
